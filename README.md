@@ -1,4 +1,4 @@
-# <img align="right" src="docs/images/Fink_PrimaryLogo_WEB.png" width="350"> Fink
+# <img align="right" src="docs/images/Fink_PrimaryLogo_WEB.png" width="350"> 
 
 ## Fink: early supernovae Ia classification using active learning
 
