@@ -17,7 +17,7 @@ The data necessary to reproduce these results are available through [zenodo](htt
 - [early_sn_classifier.py](https://github.com/emilleishida/fink_sn_activelearning/blob/master/code/early_sn_classifier.py):
     global functions for feature extraction and learning loop. 
     User choices are restricted to lines 462-497.
-    In order to generate the first data matrix it is necessary to access the AL_data folder, which is provided in an accompaning file.
+    In order to generate the first data matrix it is necessary to access the AL_data folder, which is provided through [zenodo](https://zenodo.org/record/5645609#.YcD3przMJNg).
     
 - [mean_model.ipynb](https://github.com/emilleishida/fink_sn_activelearning/blob/master/code/mean_model.ipynb):
     Extract best performing model from a given query strategy, save pkl file and generate list of alerts used of training.
