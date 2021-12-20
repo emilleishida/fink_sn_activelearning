@@ -1,0 +1,24 @@
+Created by Emille E. O. Ishida on 19 November 2021
+
+This folder contains code allowing reproducibility of results presented in Leoni et al., 2021, "Fink: early supernovae Ia classification using active learning"
+
+
+sigmoid.py: 
+    functions related to the sigmoid feature extraction
+    
+classifier_sigmoid.py: 
+    functions related to filtering points on the rise and concatenation with extra features (SNR, npoints, chi2) with sigmoid fit parameters
+
+early_sn_classifier.py:
+    global functions for feature extraction and learning loop. 
+    User choices are restricted to lines 462-497.
+    In order to generate the first data matrix it is necessary to access the AL_data folder, which is provided in an accompaning file.
+    
+mean_model.ipynb:
+    Extract best performing model from a given query strategy, save pkl file and generate list of alerts used of training.
+    
+plots/:
+    Folder of jupyter notebooks for reproducing the plots in Leoni et al., 2021
+    
+LICENSE:
+    MIT License
