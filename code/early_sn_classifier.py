@@ -463,21 +463,23 @@ def main():
     
     #########     User choices: general    #########################
     
-    create_matrix = False           # create raw data file by combining all TNS + a few simbad files
+    create_matrix = False            # create raw data file by combining all TNS + a few simbad files
     n_files_simbad = 5              # number of simbad files randomly chosen to compose the raw data
     
     
-    fname_features_matrix = '../data/features.csv'   # output features file
-    fname_raw_output = '../data/raw.csv.gz'          # output raw data file
-    dirname_input = '../data/AL_data/'               # input directory with labelled alerts
-    dirname_output = '../'                           # root products output directory
+    fname_features_matrix = '../../../referee/data/features.csv'   # output features file
+    fname_raw_output = '../../../referee/data/raw.csv.gz'          # output raw data file
+    dirname_input = '../../../data/AL_data/'                       # input directory with labelled alerts
+    dirname_output = '../../../referee/'                           # root products output directory
+    append_name = ''                                               # append to all metric, prob and queries names
     
     nloops = 300                        # number of learning loops
     strategy = 'RandomSampling'         # query strategy
     initial_training = 10               # total number of objs in initial training
     frac_Ia_tot = 0.5                   # fraction of Ia in initial training 
-    n_realizations = 100                # number of realizations
-    new_raw_file = True                 # save raw data in one file
+    n_realizations = 100                 # total number of realizations
+    n_realizations_ini = 0              # start from this realization number
+    new_raw_file = False                 # save raw data in one file
     input_raw_file = fname_raw_output   # name of raw data file
     n = 15000                           # number of random simbad objects per file 
                                         # to be used as part of the raw data
@@ -485,13 +487,10 @@ def main():
     drop_zeros = True                   # ignore objects with observations in only 1 filter
     screen = True                       # print debug comments to screen
     
-    #################################################################
-    ################################################################
-    
     #####  User choices: For Figure 7      ##########################
     
-    initial_state_from_file = False      # read initial state from a fixed file
-    initial_state_version = 6            # version from which initial state is chosen
+    initial_state_from_file = True      # read initial state from a fixed file
+    initial_state_version = 84            # version from which initial state is chosen
     
     ################################################################
     ################################################################
@@ -524,9 +523,9 @@ def main():
         fname_ini_train = dirname_output + '/UncSampling/training_samples/initialtrain_v' + str(initial_state_version) + '.csv'              
         fname_ini_test = dirname_output + '/UncSampling/test_samples/initial_test_v' + str(initial_state_version) + '.csv'
     
-        output_metrics_file = dirname_output + '/' + strategy + '/metrics/metrics_' + strategy + '_v' + str(initial_state_version) + '_ini_cond_US.dat'
-        output_queried_file = dirname_output + '/' + strategy + '/queries/queried_' + strategy + '_v'+ str(initial_state_version) + '_ini_cond_US.dat'
-        output_prob_root = dirname_output + '/' + strategy + '/class_prob/v' + str(initial_state_version) + '/class_prob_' + strategy + '_ini_cond_US_'
+        output_metrics_file = dirname_output + '/' + strategy + '/metrics/metrics_' + strategy + '_v' + str(initial_state_version) + append_name + '.dat'
+        output_queried_file = dirname_output + '/' + strategy + '/queries/queried_' + strategy + '_v'+ str(initial_state_version) + append_name + '.dat'
+        output_prob_root = dirname_output + '/' + strategy + '/class_prob/v' + str(initial_state_version) + '/class_prob_' + strategy + append_name
     
         name = dirname_output + '/' + strategy + '/class_prob/v' + str(initial_state_version) + '/'
         if not os.path.isdir(name):
@@ -541,10 +540,10 @@ def main():
                    batch=1, screen=True, output_prob_root=output_prob_root)
         
     else:
-        for v in range(n_realizations):
-            output_metrics_file = dirname_output + '/' + strategy + '/metrics/metrics_' + strategy + '_v' + str(v) + '_ini_cond_US.dat'
-            output_queried_file = dirname_output + '/' + strategy + '/queries/queried_' + strategy + '_v'+ str(v) + '_ini_cond_US.dat'
-            output_prob_root = dirname_output + '/' + strategy + '/class_prob/v' + str(v) + '/class_prob_' + strategy + '_ini_cond_US_'
+        for v in range(n_realizations_ini, n_realizations):
+            output_metrics_file = dirname_output + '/' + strategy + '/metrics/metrics_' + strategy + '_v' + str(v) + append_name + '.dat'
+            output_queried_file = dirname_output + '/' + strategy + '/queries/queried_' + strategy + '_v'+ str(v) + append_name + '.dat'
+            output_prob_root = dirname_output + '/' + strategy + '/class_prob/v' + str(v) + '/class_prob_' + strategy + append_name
     
             name = dirname_output + '/' + strategy + '/class_prob/v' + str(v) + '/'
             if not os.path.isdir(name):

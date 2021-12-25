@@ -16,7 +16,7 @@
 import numpy as np
 
 from scipy.optimize import least_squares
-from scipy.stats import chisquare
+from sklearn.metrics import r2_score
 
 
 def delta_t(time_index: np.array) -> np.array:
@@ -133,6 +133,6 @@ def compute_chi_square(f_obs: np.array, f_exp: np.array) -> float:
         chi_square between fitted and observed
     """
 
-    test_chi = chisquare(f_obs, f_exp,)
-
-    return test_chi[0]
+    test_chi = r2_score(f_obs, f_exp)
+    
+    return test_chi
