@@ -137,14 +137,14 @@ def featurize_full_dataset(lc: pd.DataFrame, screen=False):
     pd.DataFrame
         Features for all objects in the data set. Columns are:
         ['objectId', 'type', 'a_g', 'b_g', 'c_g', 'snratio_g', 
-        'chisq_g', 'nrise_g', 'a_r', 'b_r', 'c_r', 'snratio_r',
-        'chisq_r', 'nrise_r']
+        'mse_g', 'nrise_g', 'a_r', 'b_r', 'c_r', 'snratio_r',
+        'mse_r', 'nrise_r']
     """
     
     # columns in output data matrix
     columns = ['id', 'type', 'a_g', 'b_g', 'c_g', 
-               'snratio_g', 'chisq_g', 'nrise_g', 'a_r', 'b_r', 'c_r',
-               'snratio_r', 'chisq_r', 'nrise_r']
+               'snratio_g', 'mse_g', 'nrise_g', 'a_r', 'b_r', 'c_r',
+               'snratio_r', 'mse_r', 'nrise_r']
 
     features_all = []
 
@@ -184,8 +184,8 @@ def build_samples(features: pd.DataFrame, initial_training: int,
     ----------
     features: pd.DataFrame
         Complete feature matrix. Columns are: ['objectId', 'type', 
-        'a_g', 'b_g', 'c_g', 'snratio_g', 'chisq_g', 'nrise_g', 
-        'a_r', 'b_r', 'c_r', 'snratio_r', 'chisq_r', 'nrise_r']
+        'a_g', 'b_g', 'c_g', 'snratio_g', 'mse_g', 'nrise_g', 
+        'a_r', 'b_r', 'c_r', 'snratio_r', 'mse_r', 'nrise_r']
         
     initial_training: int
         Number of objects in the training sample.
@@ -478,7 +478,7 @@ def main():
     initial_training = 10               # total number of objs in initial training
     frac_Ia_tot = 0.5                   # fraction of Ia in initial training 
     n_realizations = 100                 # total number of realizations
-    n_realizations_ini = 0              # start from this realization number
+    n_realizations_ini = 80              # start from this realization number
     new_raw_file = False                 # save raw data in one file
     input_raw_file = fname_raw_output   # name of raw data file
     n = 15000                           # number of random simbad objects per file 
@@ -490,13 +490,13 @@ def main():
     #####  User choices: For Figure 7      ##########################
     
     initial_state_from_file = True      # read initial state from a fixed file
-    initial_state_version = 84            # version from which initial state is chosen
+    initial_state_version = 68            # version from which initial state is chosen
     
     ################################################################
     ################################################################
     
-    features_names = ['a_g', 'b_g', 'c_g', 'snratio_g', 'chisq_g', 'nrise_g', 
-                          'a_r', 'b_r', 'c_r', 'snratio_r', 'chisq_r', 'nrise_r']
+    features_names = ['a_g', 'b_g', 'c_g', 'snratio_g', 'mse_g', 'nrise_g', 
+                          'a_r', 'b_r', 'c_r', 'snratio_r', 'mse_r', 'nrise_r']
     
     for name in [dirname_output + '/', 
                  dirname_output + '/data/', 

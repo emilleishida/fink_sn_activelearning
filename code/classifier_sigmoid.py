@@ -19,12 +19,12 @@ import random
 
 from sigmoid import fit_sigmoid
 from sigmoid import delta_t
-from sigmoid import compute_chi_square
+from sigmoid import compute_mse
 from sigmoid import fsigmoid
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
 fluxes = ['FLUXCAL', 'FLUXCALERR']
-RF_FEATURE_NAMES = 'a_g,b_g,c_g,snratio_g,chisq_g,nrise_g,a_r,b_r,c_r,snratio_r,chisq_r,nrise_r'.split(',')
+RF_FEATURE_NAMES = 'a_g,b_g,c_g,snratio_g,mse_g,nrise_g,a_r,b_r,c_r,snratio_r,mse_r,nrise_r'.split(',')
 
 def filter_data(data, filt):
     """Select data according to the value of the
@@ -104,15 +104,14 @@ def get_fake_fit_parameters():
 
     Returns
     -------
-    [a, b, c, snratio, chisq] = list of floats
+    [a, b, c, snratio, mse] = list of floats
     list of fake features in the absence of real fit
 
     """
 
-    [a, b, c, snratio, chisq] = [0, 0, 0, 0.1, 1e8]
-    # [a, b, c, snratio, chisq] = [0, 0, 0, 0.0, 0.0]
+    [a, b, c, snratio, mse] = [0, 0, 0, 0.1, 1e8]
 
-    return [a, b, c, snratio, chisq]
+    return [a, b, c, snratio, mse]
 
 
 def get_fake_results(filt):
@@ -124,15 +123,15 @@ def get_fake_results(filt):
 
     Returns
     ------
-    [export, a, b, c, snratio, chisq, nrise]: list of
+    [export, a, b, c, snratio, mse, nrise]: list of
         DataFrame and floats
     list of fake results in the absence of a real fit
 
     """
     nrise = 0
-    [a, b, c, snratio, chisq] = get_fake_fit_parameters()
+    [a, b, c, snratio, mse] = get_fake_fit_parameters()
 
-    return [a, b, c, snratio, chisq, nrise]
+    return [a, b, c, snratio, mse, nrise]
 
 
 def get_ewma_derivative(data, ewma_window):
@@ -302,8 +301,8 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
     -------
     out: list of floats
         List of features, ordered by filter bands:
-        [a['g'], b['g'], c['g'], snratio['g'], chisq['g'], nrise['g'],
-         a['r'], b['r'], c['r'], snratio['r'], chisq['r'], nrise['r']]
+        [a['g'], b['g'], c['g'], snratio['g'], mse['g'], nrise['g'],
+         a['r'], b['r'], c['r'], snratio['r'], mse['r'], nrise['r']]
 
     """
     # lower bound on flux
@@ -325,7 +324,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
     b = {}
     c = {}
     snratio = {}
-    chisq = {}
+    mse = {}
     nrise = {}
 
     for i in list_filters:
@@ -370,20 +369,20 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
                 # predicted flux with fit parameters
                 pred_flux = get_predicted_flux(dt, a[i], b[i], c[i])
 
-                # compute chi-square
-                chisq[i] = compute_chi_square(rising_flux/sum(rising_flux), 
+                # compute mse
+                mse[i] = compute_mse(rising_flux/sum(rising_flux), 
                                               pred_flux/sum(pred_flux))
 
             else:
                 # if rising flux has less than three
-                [a[i], b[i], c[i], snratio[i], chisq[i], nrise[i]] = \
+                [a[i], b[i], c[i], snratio[i], mse[i], nrise[i]] = \
                     get_fake_results(i)
         else:
             # if data points not enough
-            [a[i], b[i], c[i], snratio[i], chisq[i], nrise[i]] = \
+            [a[i], b[i], c[i], snratio[i], mse[i], nrise[i]] = \
                 get_fake_results(i)
 
     return [
-        a['g'], b['g'], c['g'], snratio['g'], chisq['g'], nrise['g'],
-        a['r'], b['r'], c['r'], snratio['r'], chisq['r'], nrise['r']
+        a['g'], b['g'], c['g'], snratio['g'], mse['g'], nrise['g'],
+        a['r'], b['r'], c['r'], snratio['r'], mse['r'], nrise['r']
     ]
