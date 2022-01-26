@@ -2,7 +2,7 @@
 
 ## Fink: early supernovae Ia classification using active learning
 
-This repository contains code allowing reproducibility of results presented in [Leoni et al., 2021, arxvi:astro-ph/2111.11438](https://arxiv.org/abs/2111.11438)
+This repository contains code allowing reproducibility of results presented in [Leoni et al., 2021, arxvi:astro-ph/2111.11438](https://arxiv.org/abs/2111.11438). 
 
 We list below a general description of each script/notebook. 
 
@@ -25,5 +25,19 @@ The data necessary to reproduce these results are available through [zenodo](htt
 - [plots/](https://github.com/emilleishida/fink_sn_activelearning/tree/master/code/plots):
     Folder of jupyter notebooks for reproducing the plots in Leoni et al., 2021
     
-- [LICENSE]():
+- [LICENSE](https://github.com/emilleishida/fink_sn_activelearning/blob/master/LICENSE):
     MIT License
+    
+    
+## Installation
+
+Create a virtual environment following [these instructions](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/26/python-virtual-env/). Source it and install the [actsnclass](https://github.com/COINtoolbox/ActSNClass) package.
+
+Then you can install the other dependencies using pip:
+
+> python3 -m pip install -r requirements.txt
+
+
+
+
+
