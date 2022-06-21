@@ -336,7 +336,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
         data_mjd = mask_negative_data(data_tmp_avg, low_bound)
 
         # check data have at least 5 points
-        if len(data_mjd['FLUXCAL'].values > min_data_points):
+        if len(data_mjd['FLUXCAL'].values) > min_data_points:
             # compute the derivative
             deriv_ewma = get_ewma_derivative(data_mjd['FLUXCAL'], ewma_window)
             # mask data with negative part
@@ -370,7 +370,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
                 pred_flux = get_predicted_flux(dt, a[i], b[i], c[i])
 
                 # compute mse
-                mse[i] = compute_mse(rising_flux/sum(rising_flux), 
+                mse[i] = compute_mse(rising_flux/sum(rising_flux),
                                               pred_flux/sum(pred_flux))
 
             else:
