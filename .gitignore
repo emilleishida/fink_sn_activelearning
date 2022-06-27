@@ -1,4 +1,6 @@
-code/.ipynb_checkpoints/
-code/__pycache__/
-code/plots/.ipynb_checkpoints/
+build/
+actsnfink.egg-info/
 .ipynb_checkpoints/
+actsnfink/.ipynb_checkpoints/
+actsnfink/notebooks/.ipynb_checkpoints/
+actsnfink/scripts/.ipynb_checkpoints/
