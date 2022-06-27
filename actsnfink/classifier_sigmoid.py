@@ -1,11 +1,11 @@
 # Copyright 2020 AstroLab Software
 # Author: Marco Leoni, Julien Peloton
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the MIT License;
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#      https://opensource.org/licenses/mit-license.php
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -309,7 +309,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
     low_bound = -10
 
     # width of the ewma window
-    ewma_window = 3
+    ewma_window = 4
 
     # N min data points
     min_data_points = 4
@@ -386,3 +386,9 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
         a['g'], b['g'], c['g'], snratio['g'], mse['g'], nrise['g'],
         a['r'], b['r'], c['r'], snratio['r'], mse['r'], nrise['r']
     ]
+
+def main():
+    return None
+    
+if __name__ == '__main__':
+    main()

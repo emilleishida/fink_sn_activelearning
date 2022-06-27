@@ -1,11 +1,11 @@
 # Copyright 2020-2021 AstroLab Software
 # Author: Marco Leoni, Julien Peloton
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the MIT License;
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#      https://opensource.org/licenses/mit-license.php
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -136,3 +136,10 @@ def compute_mse(f_obs: np.array, f_exp: np.array) -> float:
     test_mse = mean_squared_error(f_obs, f_exp)
     
     return test_mse
+
+
+def main():
+    return None
+    
+if __name__ == '__main__':
+    main()
