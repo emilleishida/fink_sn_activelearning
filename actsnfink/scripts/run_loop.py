@@ -22,12 +22,12 @@ def main():
     
     #########     User choices: general    #########################
     
-    create_matrix = False            # create raw data file by combining all TNS + a few simbad files
+    create_matrix = True            # create raw data file by combining all TNS + a few simbad files
     n_files_simbad = 5              # number of simbad files randomly chosen to compose the raw data
     
     
-    fname_features_matrix = '../../../referee/data/features.csv'   # output features file
-    fname_raw_output = '../../../referee/data/raw.csv.gz'          # output raw data file
+    fname_features_matrix = '../../../test_pip/data/features.csv'   # output features file
+    fname_raw_output = '../../../test/data/raw.csv.gz'          # output raw data file
     dirname_input = '../../../data/AL_data/'                       # input directory with labelled alerts
     dirname_output = '../../../test_pip/'                           # root products output directory
     append_name = ''                                               # append to all metric, prob and queries names
@@ -36,8 +36,8 @@ def main():
     strategy = 'UncSampling'         # query strategy
     initial_training = 10               # total number of objs in initial training
     frac_Ia_tot = 0.5                   # fraction of Ia in initial training 
-    n_realizations = 100                 # total number of realizations
-    n_realizations_ini = 80              # start from this realization number
+    n_realizations = 1                  # total number of realizations
+    n_realizations_ini = 0              # start from this realization number
     new_raw_file = False                 # save raw data in one file
     input_raw_file = fname_raw_output   # name of raw data file
     n = 15000                           # number of random simbad objects per file 
