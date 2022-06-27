@@ -18,6 +18,8 @@ import numpy as np
 from scipy.optimize import least_squares
 from sklearn.metrics import mean_squared_error
 
+__all__ = ['delta_t', 'fsigmoid', 'errfunc_sigmoid', 'fit_sigmoid', 'compute_mse']
+
 
 def delta_t(time_index: np.array) -> np.array:
     """ Re-index an index relatively to the first data point.
