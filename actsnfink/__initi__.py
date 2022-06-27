@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .early_sn_classifier import *
-from .classifier_sigmoid import *
-from .sigmoid import *
+from actsnfink.early_sn_classifier import *
+from actsnfink.classifier_sigmoid import *
+from actsnfink.sigmoid import *
 
 __all__ = [
     'average_intraday_data',
