@@ -17,10 +17,15 @@ import pandas as pd
 import numpy as np
 import random
 
-from sigmoid import fit_sigmoid
-from sigmoid import delta_t
-from sigmoid import compute_mse
-from sigmoid import fsigmoid
+from actsnfink.sigmoid import fit_sigmoid
+from actsnfink.sigmoid import delta_t
+from actsnfink.sigmoid import compute_mse
+from actsnfink.sigmoid import fsigmoid
+
+__all__ = ['filter_data', 'mask_negative_data', 'get_fake_df', 'get_fake_fit_parameters',
+          'get_fake_results', 'get_ewma_derivative', 'get_sn_ratio', 'get_predicted_flux',
+          'get_data_to_export', 'get_train_test', 'average_intraday_data', 'get_sigmoid_features_dev']
+
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
 fluxes = ['FLUXCAL', 'FLUXCALERR']
@@ -309,13 +314,13 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
     low_bound = -10
 
     # width of the ewma window
-    ewma_window = 4
+    ewma_window = 3
 
     # N min data points
-    min_data_points = 4
+    min_data_points = 3
 
     # N min rising data points
-    min_rising_points = 3
+    min_rising_points = 1
 
     list_filters = ['g', 'r']
 
