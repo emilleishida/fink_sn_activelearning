@@ -28,8 +28,11 @@ __all__ = ['filter_data', 'mask_negative_data', 'get_fake_df', 'get_fake_fit_par
 
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
+columns_to_keep_elastic = ['MJD', 'BAND', 'FLUXCAL', 'FLUXCALERR']
+
 fluxes = ['FLUXCAL', 'FLUXCALERR']
 RF_FEATURE_NAMES = 'a_g,b_g,c_g,snratio_g,mse_g,nrise_g,a_r,b_r,c_r,snratio_r,mse_r,nrise_r'.split(',')
+
 
 def filter_data(data, filt):
     """Select data according to the value of the
@@ -325,7 +328,7 @@ def get_sigmoid_features_elastic(data_all: pd.DataFrame):
     Parameters
     ----------
     data_all: pd.DataFrame
-        Pandas DataFrame with at least ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
+        Pandas DataFrame with at least ['MJD', 'BAND', 'FLUXCAL', 'FLUXCALERR']
         as columns.
 
     Returns
@@ -362,13 +365,13 @@ def get_sigmoid_features_elastic(data_all: pd.DataFrame):
     nrise = {}
 
     # data_all = replace_filter_string(data)
-    max_fluxcal = get_max_fluxcal(data_all[columns_to_keep], list_filters)
+    max_fluxcal = get_max_fluxcal(data_all[columns_to_keep_elastic], list_filters)
 
     if(max_fluxcal > cutoff_max):
 
         for i in list_filters:
             # select filter
-            data_tmp = filter_data(data_all[columns_to_keep], i)
+            data_tmp = filter_data(data_all[columns_to_keep_elastic], i)
 
             # average over intraday data points
             data_tmp_avg = average_intraday_data(data_tmp)
@@ -521,7 +524,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
 
                 # compute mse
                 mse[i] = compute_mse(rising_flux/sum(rising_flux),
-                                              pred_flux/sum(pred_flux))
+                                     pred_flux/sum(pred_flux))
 
             else:
                 # if rising flux has less than three
@@ -537,8 +540,10 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
         a['r'], b['r'], c['r'], snratio['r'], mse['r'], nrise['r']
     ]
 
+
 def main():
     return None
+
 
 if __name__ == '__main__':
     main()
