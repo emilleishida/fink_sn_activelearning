@@ -28,7 +28,8 @@ __all__ = ['filter_data', 'mask_negative_data', 'get_fake_df', 'get_fake_fit_par
 
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
-columns_to_keep_elastic = ['MJD', 'BAND', 'FLUXCAL', 'FLUXCALERR']
+#columns_to_keep_elastic = ['MJD', 'BAND', 'FLUXCAL', 'FLUXCALERR']
+columns_to_keep_elastic = ['midPointTai', 'filterName', 'psFlux', 'psFluxErr']
 
 fluxes = ['FLUXCAL', 'FLUXCALERR']
 RF_FEATURE_NAMES = 'a_g,b_g,c_g,snratio_g,mse_g,nrise_g,a_r,b_r,c_r,snratio_r,mse_r,nrise_r'.split(',')
