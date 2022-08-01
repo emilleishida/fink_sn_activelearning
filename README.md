@@ -21,7 +21,7 @@ The data necessary to reproduce these results are available through [zenodo](htt
     Extract best performing model from a given query strategy, save pkl file and generate list of alerts used of training.
     
 - notebooks/0X with X \in [1,2,3,4,5,7]:
-    Jupyter notebooks for reproducing the plots in Leoni et al., 2021
+    Jupyter notebooks for reproducing the plots in [Leoni et al., 2022](https://ui.adsabs.harvard.edu/abs/2022A%26A...663A..13L/abstract)
     
 - scripts/run_loop.py
     Example script on how to use this package. 
