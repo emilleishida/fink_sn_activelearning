@@ -11,19 +11,19 @@ The data necessary to reproduce these results are available through [zenodo](htt
 - [actsnfink/sigmoid.py](https://github.com/emilleishida/fink_sn_activelearning/blob/master/actsnfink/sigmoid.py): 
     functions related to the sigmoid feature extraction
     
-- [classifier_sigmoid.py](https://github.com/emilleishida/fink_sn_activelearning/blob/master/actsnfink/classifier_sigmoid.py): 
+- [actsnfink/classifier_sigmoid.py](https://github.com/emilleishida/fink_sn_activelearning/blob/master/actsnfink/classifier_sigmoid.py): 
     functions related to filtering points on the rise and concatenation with extra features (SNR, npoints, chi2) with sigmoid fit parameters
 
-- [early_sn_classifier.py](https://github.com/emilleishida/fink_sn_activelearning/blob/master/actsnfink/early_sn_classifier.py):
+- [actsnfink/early_sn_classifier.py](https://github.com/emilleishida/fink_sn_activelearning/blob/master/actsnfink/early_sn_classifier.py):
     global functions for feature extraction and learning loop. 
     
-- [notebooks/mean_model.ipynb](https://github.com/emilleishida/fink_sn_activelearning/blob/master/actsnfink/notebooks/mean_model.ipynb):
+- [actsnfink/notebooks/mean_model.ipynb](https://github.com/emilleishida/fink_sn_activelearning/blob/master/actsnfink/notebooks/mean_model.ipynb):
     Extract best performing model from a given query strategy, save pkl file and generate list of alerts used of training.
     
-- notebooks/0X with X \in [1,2,3,4,5,7]:
+- actsnfink/notebooks/0X with X \in [1,2,3,4,5,7]:
     Jupyter notebooks for reproducing the plots in [Leoni et al., 2022](https://ui.adsabs.harvard.edu/abs/2022A%26A...663A..13L/abstract)
     
-- scripts/run_loop.py
+- actsnfink/scripts/run_loop.py
     Example script on how to use this package. 
     
 - [LICENSE](https://github.com/emilleishida/fink_sn_activelearning/blob/master/LICENSE):
