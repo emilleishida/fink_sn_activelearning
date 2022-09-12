@@ -28,8 +28,7 @@ __all__ = ['filter_data', 'mask_negative_data', 'get_fake_df', 'get_fake_fit_par
 
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
-#columns_to_keep_elastic = ['MJD', 'BAND', 'FLUXCAL', 'FLUXCALERR']
-columns_to_keep_elastic = ['midPointTai', 'filterName', 'psFlux', 'psFluxErr']
+columns_to_keep_elastic = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
 
 fluxes = ['FLUXCAL', 'FLUXCALERR']
 RF_FEATURE_NAMES = 'a_g,b_g,c_g,snratio_g,mse_g,nrise_g,a_r,b_r,c_r,snratio_r,mse_r,nrise_r'.split(',')
@@ -322,7 +321,7 @@ def get_max_fluxcal(data, list_filters):
     return max_fluxcal
 
 
-def get_sigmoid_features_elastic(data_all: pd.DataFrame):
+def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
     """Compute the features needed for the Random Forest classification based
     on the sigmoid model.
 
@@ -336,8 +335,8 @@ def get_sigmoid_features_elastic(data_all: pd.DataFrame):
     -------
     out: list of floats
         List of features, ordered by filter bands:
-        [a['g'], b['g'], c['g'], snratio['g'], chisq['g'], nrise['g'],
-         a['r'], b['r'], c['r'], snratio['r'], chisq['r'], nrise['r']]
+        [a['X'], b['X'], c['X'], snratio['X'], chisq['X'], nrise['X'] for X in bands]
+        X=u,g,r,i,z,Y
 
     """
     # lower bound on flux
@@ -355,7 +354,7 @@ def get_sigmoid_features_elastic(data_all: pd.DataFrame):
     # cutoff on fluxcal
     cutoff_max = 100.
 
-    list_filters = ['r', 'g', 'Y', 'i', 'u', 'z']
+    list_filters = ['u', 'g', 'r', 'i', 'z', 'Y']
 
     # features for different filters
     a = {}
@@ -429,15 +428,19 @@ def get_sigmoid_features_elastic(data_all: pd.DataFrame):
                 # if data points not enough
                 [a[i], b[i], c[i], snratio[i], chisq[i], nrise[i]] = \
                     get_fake_results(i)
-        else:
-            for i in list_filters:
-                # if max fluxcal lower than threshol
-                [a[i], b[i], c[i], snratio[i], chisq[i], nrise[i]] = \
-                    get_fake_results(i)
+    else:
+        for i in list_filters:
+            # if max fluxcal lower than threshol
+            [a[i], b[i], c[i], snratio[i], chisq[i], nrise[i]] = \
+                get_fake_results(i)
 
     return [
+        a['u'], b['u'], c['u'], snratio['u'], chisq['u'], nrise['u'],
         a['g'], b['g'], c['g'], snratio['g'], chisq['g'], nrise['g'],
-        a['r'], b['r'], c['r'], snratio['r'], chisq['r'], nrise['r']
+        a['r'], b['r'], c['r'], snratio['r'], chisq['r'], nrise['r'],
+        a['i'], b['i'], c['i'], snratio['i'], chisq['i'], nrise['i'],
+        a['z'], b['z'], c['z'], snratio['z'], chisq['z'], nrise['z'],
+        a['Y'], b['Y'], c['Y'], snratio['Y'], chisq['Y'], nrise['Y']
     ]
 
 
