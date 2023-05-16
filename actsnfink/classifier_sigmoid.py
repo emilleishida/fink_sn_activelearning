@@ -24,7 +24,7 @@ from actsnfink.sigmoid import fsigmoid
 
 __all__ = ['filter_data', 'mask_negative_data', 'get_fake_df', 'get_fake_fit_parameters',
           'get_fake_results', 'get_ewma_derivative', 'get_sn_ratio', 'get_predicted_flux',
-          'get_data_to_export', 'get_train_test', 'average_intraday_data', 'get_sigmoid_features_dev']
+          'get_data_to_export', 'get_train_test', 'average_intraday_data', 'get_sigmoid_features_dev', 'get_sigmoid_features_elasticc']
 
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
@@ -35,22 +35,22 @@ RF_FEATURE_NAMES = 'a_g,b_g,c_g,snratio_g,mse_g,nrise_g,a_r,b_r,c_r,snratio_r,ms
 
 
 def filter_data(data, filt):
-    """Select data according to the value of the
-       filter (for ZTF only g, r)
+    """
+    Select data according to the value of the
+    filter (for ZTF only g, r)
 
-        Parameters
-        ----------
-        data: pandas DataFrame
-            containing light curves for different filters
-        filt: string
-            defining the filter ('g' or 'r')
+    Parameters
+    ----------
+    data: pandas DataFrame
+          containing light curves for different filters
+    filt: string
+          defining the filter (For ZTF, 'g' or 'r')
 
-         Returns
-         -------
-         data_filt: pandas DataFrame
-        containing light curves for the selected filter, filt
-
-        """
+    Returns
+    -------
+    data_filt: pandas DataFrame
+               containing light curves for the selected filter, filt
+    """
 
     data_filt = data.loc[data['FLT'] == filt]
 
@@ -74,9 +74,9 @@ def mask_negative_data(data, low_bound):
        light curve with masked flux
 
         """
-
-    masked_data = data.mask(data['FLUXCAL'] < low_bound)\
-        .set_index(data['MJD'])[fluxes].dropna()
+    
+    masked_data = data[data['FLUXCAL'].values > low_bound]
+    
     return masked_data
 
 
@@ -302,7 +302,9 @@ def get_max_fluxcal(data, list_filters):
     Parameters:
     -----------
     data: pd.DataFrame
+        Light curve data. Required key: "FLUXCAL"
     list_filters: list
+        List of filters to consider.
 
     Returns:
     --------
@@ -310,18 +312,17 @@ def get_max_fluxcal(data, list_filters):
 
     """
 
-    local_max_fluxcal = []
-    for i in list_filters:
-
-        data_tmp = filter_data(data, i)
-        local_max_fluxcal.append(data_tmp['FLUXCAL'].max())
-
-    max_fluxcal = np.max(local_max_fluxcal)
-
-    return max_fluxcal
+    flag = np.array([item in list_filters 
+                     for item in data['FLT'].values])
+    if sum(flag) > 0:
+        return max(data[flag]['FLUXCAL'].values)
+    else:
+        return 0
 
 
-def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
+def get_sigmoid_features_elasticc(data_all: pd.DataFrame, 
+                                  min_data_points=3, 
+                                  list_filters=['g', 'r']):
     """Compute the features needed for the Random Forest classification based
     on the sigmoid model.
 
@@ -330,14 +331,19 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
     data_all: pd.DataFrame
         Pandas DataFrame with at least ['MJD', 'BAND', 'FLUXCAL', 'FLUXCALERR']
         as columns.
+    min_data_points: int (optional)
+        Minimum data points necessary to proceed.
+        Default is 3.
+    list_filters: list (optional)
+        List of filters to considered.
+        Default is ['g', 'r'].
 
     Returns
     -------
     out: list of floats
         List of features, ordered by filter bands:
-        [a['X'], b['X'], c['X'], snratio['X'], chisq['X'], nrise['X'] for X in bands]
-        X=u,g,r,i,z,Y
-
+        [a['X'], b['X'], c['X'], snratio['X'], chisq['X'], nrise['X'] 
+        for X in list_filters]
     """
     # lower bound on flux
     low_bound = 0
@@ -345,16 +351,11 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
     # width of the ewma window
     ewma_window = 3
 
-    # N min data points
-    min_data_points = 3
-
     # N min rising data points
     min_rising_points = 1
 
     # cutoff on fluxcal
     cutoff_max = 100.
-
-    list_filters = ['u', 'g', 'r', 'i', 'z', 'Y']
 
     # features for different filters
     a = {}
@@ -364,26 +365,24 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
     chisq = {}
     nrise = {}
 
-    # data_all = replace_filter_string(data)
-    max_fluxcal = get_max_fluxcal(data_all[columns_to_keep_elastic], list_filters)
-
-    if(max_fluxcal > cutoff_max):
-
-        for i in list_filters:
-            # select filter
-            data_tmp = filter_data(data_all[columns_to_keep_elastic], i)
+    for i in list_filters:
+        # select filter
+        data_tmp = filter_data(data_all, i)
+        
+        max_fluxcal = max(data_temp['FLUXCAL'])
+        mjd = data_temp['MJD'].values
+        
+        if(max_fluxcal > cutoff_max) and \
+           max_fluxcal == data_temp['FLUXCAL'].values[np.argsort(mjd[-1])]:
 
             # average over intraday data points
             data_tmp_avg = average_intraday_data(data_tmp)
 
-            # mask negative flux below low bound
-            if not data_tmp_avg.empty:
-                data_mjd = mask_negative_data(data_tmp_avg, low_bound)
-            else:
-                data_mjd = pd.DataFrame({'FLUXCAL': []})
+            # get alerts with max 20 days 
 
-            # check data have at least 5 points
-            if len(data_mjd['FLUXCAL'].values) > min_data_points:
+            # check data have minimum number of data points
+            if len(data_mjd['FLUXCAL'].values) >= min_data_points:
+            
                 # compute the derivative
                 deriv_ewma = get_ewma_derivative(data_mjd['FLUXCAL'],
                                                  ewma_window)
@@ -392,8 +391,9 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
                 # get longest raising sequence
                 rising_data = data_masked.dropna()
 
-                # at least three points (needed for the sigmoid fit)
-                if len(rising_data) > min_rising_points:
+                # only calculate if alert is still rising
+                if len(rising_data) >= min_rising_points and \
+                   max(rising_data['MJD']) == max(data_mjd['MJD']):
 
                     # focus on flux
                     rising_time = rising_data['FLUXCAL'].index.values
@@ -421,7 +421,7 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
                     chisq[i] = compute_mse(rising_flux, pred_flux)
 
                 else:
-                    # if rising flux has less than three
+                    # if rising flux has less than min_rising_points
                     [a[i], b[i], c[i], snratio[i], chisq[i], nrise[i]] = \
                         get_fake_results(i)
             else:
@@ -434,15 +434,16 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
             [a[i], b[i], c[i], snratio[i], chisq[i], nrise[i]] = \
                 get_fake_results(i)
 
-    return [
-        a['u'], b['u'], c['u'], snratio['u'], chisq['u'], nrise['u'],
-        a['g'], b['g'], c['g'], snratio['g'], chisq['g'], nrise['g'],
-        a['r'], b['r'], c['r'], snratio['r'], chisq['r'], nrise['r'],
-        a['i'], b['i'], c['i'], snratio['i'], chisq['i'], nrise['i'],
-        a['z'], b['z'], c['z'], snratio['z'], chisq['z'], nrise['z'],
-        a['Y'], b['Y'], c['Y'], snratio['Y'], chisq['Y'], nrise['Y']
-    ]
+    result = []
+    for f in list_filters:
+        result.append(a[f])
+        result.append(b[f])
+        result.append(c[f])
+        result.append(snratio[f])
+        result.append(chisq[f])
+        result.append(nrise[f])
 
+    return result
 
 def get_sigmoid_features_dev(data_all: pd.DataFrame):
     """Compute the features needed for the Random Forest classification based
