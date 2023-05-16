@@ -312,13 +312,15 @@ def get_max_fluxcal(data, list_filters):
 
     """
 
-    flag = np.array([item in list_filters 
-                     for item in data['FLT'].values])
-    if sum(flag) > 0:
-        return max(data[flag]['FLUXCAL'].values)
-    else:
-        return 0
+    local_max_fluxcal = []
+    for i in list_filters:
 
+        data_tmp = filter_data(data, i)
+        local_max_fluxcal.append(data_tmp['FLUXCAL'].max())
+
+    max_fluxcal = np.nanmax(local_max_fluxcal)
+
+    return max_fluxcal
 
 def get_sigmoid_features_elasticc(data_all: pd.DataFrame, 
                                   min_data_points=3, 
