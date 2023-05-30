@@ -523,7 +523,7 @@ def get_sigmoid_features_elasticc_perfilter(data_all: pd.DataFrame,
                         max(rising_data['MJD']) == max(data_tmp_avg['MJD']):
 
                         # focus on flux
-                        rising_time = rising_data['FLUXCAL'].index.values
+                        rising_time = rising_data['MJD'].index.values
                         rising_flux = rising_data['FLUXCAL'].values
                         rising_flux_err = rising_data['FLUXCALERR'].values
 

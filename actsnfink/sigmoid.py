@@ -104,7 +104,11 @@ def fit_sigmoid(time: np.array, flux: np.array) -> list:
         slope = (flux.argmax() - flux.argmin()) / dt
     else:
         slope = 1.
-    f0 = abs(flux[0])
+    if flux[0] > 0:
+        f0 = flux[0]
+    else:
+        f0 = 0
+        
     aguess = slope
     cguess = np.max(flux)
 
