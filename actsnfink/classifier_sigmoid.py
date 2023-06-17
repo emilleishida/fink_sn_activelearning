@@ -403,9 +403,9 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame, list_filters: list
                 if len(rising_data) > min_rising_points:
 
                     # focus on flux
-                    rising_time = rising_data['psFlux'].index.values
-                    rising_flux = rising_data['psFlux'].values
-                    rising_flux_err = rising_data['psFlux'].values
+                    #rising_time = rising_data['psFlux'].index.values
+                    rising_flux = rising_data['psFlux']#.values
+                    rising_flux_err = rising_data['psFlux']#.values
 
                     # compute signal to noise ratio
                     snratio[i] = get_sn_ratio(rising_flux, rising_flux_err)
@@ -413,7 +413,7 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame, list_filters: list
                     # get N rising points
                     nrise[i] = len(rising_flux)
 
-                    dt = delta_t(rising_time)
+                    dt = delta_t(rising_flux)
 
                     # perform sigmoid fit
                     [a[i], b[i], c[i]] = fit_sigmoid(dt, rising_flux)
