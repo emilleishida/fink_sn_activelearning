@@ -17,6 +17,7 @@ import pandas as pd
 import numpy as np
 import random
 
+
 from actsnfink.sigmoid import fit_sigmoid
 from actsnfink.sigmoid import delta_t
 from actsnfink.sigmoid import compute_mse
