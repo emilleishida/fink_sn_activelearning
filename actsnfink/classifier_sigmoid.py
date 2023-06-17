@@ -315,7 +315,7 @@ def get_max_fluxcal(data, list_filters):
     for i in list_filters:
 
         data_tmp = filter_data(data, i)
-        local_max_fluxcal.append(data_tmp['FLUXCAL'].max())
+        local_max_fluxcal.append(data_tmp['psFlux'].max())
 
     max_fluxcal = np.nanmax(local_max_fluxcal)
 
