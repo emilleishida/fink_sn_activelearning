@@ -321,7 +321,15 @@ def get_max_fluxcal(data, list_filters):
     return max_fluxcal
 
 
-def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
+   
+list_filters = ['u', 'g', 'r', 'i', 'z', 'Y']
+columns_to_keep_elastic = ['midPointTai', 'FilterName', 'psFlux', 'psFluxErr'] 
+metadata = ['ra', 'decl', 'hostgal_ra', 'hostgal_dec', 'hostgal_zphot', 
+                'hostgal_zphot_err', 'mwebv']
+
+
+def get_sigmoid_features_elasticc(data_all: pd.DataFrame, list_filters: list
+                                 columns_to_keep_elasticc: list, metadata: list):
     """Compute the features needed for the Random Forest classification based
     on the sigmoid model.
 
@@ -354,8 +362,6 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
     # cutoff on fluxcal
     cutoff_max = 100.
 
-    list_filters = ['u', 'g', 'r', 'i', 'z', 'Y']
-
     # features for different filters
     a = {}
     b = {}
@@ -380,12 +386,12 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
             if not data_tmp_avg.empty:
                 data_mjd = mask_negative_data(data_tmp_avg, low_bound)
             else:
-                data_mjd = pd.DataFrame({'FLUXCAL': []})
+                data_mjd = pd.DataFrame({'psFlux': []})
 
             # check data have at least 5 points
-            if len(data_mjd['FLUXCAL'].values) > min_data_points:
+            if len(data_mjd['psFlux'].values) > min_data_points:
                 # compute the derivative
-                deriv_ewma = get_ewma_derivative(data_mjd['FLUXCAL'],
+                deriv_ewma = get_ewma_derivative(data_mjd['psFlux'],
                                                  ewma_window)
                 # mask data with negative part
                 data_masked = data_mjd.mask(deriv_ewma < 0)
@@ -396,9 +402,9 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame):
                 if len(rising_data) > min_rising_points:
 
                     # focus on flux
-                    rising_time = rising_data['FLUXCAL'].index.values
-                    rising_flux = rising_data['FLUXCAL'].values
-                    rising_flux_err = rising_data['FLUXCALERR'].values
+                    rising_time = rising_data['psFlux'].index.values
+                    rising_flux = rising_data['psFlux'].values
+                    rising_flux_err = rising_data['psFlux'].values
 
                     # compute signal to noise ratio
                     snratio[i] = get_sn_ratio(rising_flux, rising_flux_err)
