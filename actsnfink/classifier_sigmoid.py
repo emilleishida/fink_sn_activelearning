@@ -103,6 +103,29 @@ def mask_negative_data(data, low_bound):
     return masked_data
 
 
+def mask_negative_data_elasticc(data, low_bound):
+    """Mask data points whose FLUXCAL values are
+       lower than a chosen lower bound
+
+       Prameteres
+       ----------
+       data: pandas DataFrame
+       light curve data for given filter
+       low_bound: float
+       minimum allowed value of flux
+
+       Returns
+       -------
+       data: pandas DataFrame
+       light curve with masked flux
+
+        """
+    # Emille does not understand the denominator
+    masked_data = data.mask(data['psFlux'] < low_bound)\
+        .set_index(data['midPointTai']).dropna()
+    return masked_data
+
+
 def get_fake_df(filt):
     """Get fake data frame.
 
@@ -431,7 +454,7 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame, list_filters: list
 
             # mask negative flux below low bound
             if not data_tmp_avg.empty:
-                data_mjd = mask_negative_data(data_tmp_avg, low_bound)
+                data_mjd = mask_negative_data_elasticc(data_tmp_avg, low_bound)
             else:
                 data_mjd = pd.DataFrame({'psFlux': []})
 
