@@ -58,6 +58,28 @@ def filter_data(data, filt):
     return data_filt
 
 
+def filter_data_elasticc(data, filt):
+    """Select data according to the value of the
+       filter (for ZTF only g, r)
+
+        Parameters
+        ----------
+        data: pandas DataFrame
+            containing light curves for different filters
+        filt: string
+            defining the filter ('g' or 'r')
+
+         Returns
+         -------
+         data_filt: pandas DataFrame
+        containing light curves for the selected filter, filt
+
+        """
+
+    data_filt = data.loc[data['filterName'] == filt]
+
+    return data_filt
+
 def mask_negative_data(data, low_bound):
     """Mask data points whose FLUXCAL values are
        lower than a chosen lower bound
@@ -296,6 +318,30 @@ def average_intraday_data(df_intra):
     return df_average
 
 
+def average_intraday_data_elasticc(df_intra):
+    """Average over intraday data points
+
+     Parameters
+     ----------
+     df_intra: pd.DataFrame
+        containing the history of the flux
+        with intraday data
+
+     Returns
+     -------
+     df_average: pd.DataFrame
+        containing only daily data
+    """
+
+    df_average = df_intra.copy()
+    df_average['midPointTai'] = df_average['midPointTai'].apply(
+        lambda x: np.around(x, decimals=0))
+    df_average = df_average.groupby('midPointTai').mean()
+    df_average['midPointTai'] = df_average.index.values
+
+    return df_average
+
+
 def get_max_fluxcal(data, list_filters):
     """get the maximum value of FLUXCAL for a
         given alert
@@ -378,10 +424,10 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame, list_filters: list
 
         for i in list_filters:
             # select filter
-            data_tmp = filter_data(data_all[columns_to_keep_elastic], i)
+            data_tmp = filter_data_elasticc(data_all[columns_to_keep_elastic], i)
 
             # average over intraday data points
-            data_tmp_avg = average_intraday_data(data_tmp)
+            data_tmp_avg = average_intraday_data_elasticc(data_tmp)
 
             # mask negative flux below low bound
             if not data_tmp_avg.empty:
