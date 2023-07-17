@@ -445,9 +445,8 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame,
         result.append(chisq[f])
         result.append(nrise[f])
 
-<<<<<<< HEAD
     return result
-=======
+                                            
 def get_sigmoid_features_elasticc_perfilter(data_all: pd.DataFrame, 
                                   min_data_points=3, 
                                   list_filters=['g', 'r']):
@@ -577,8 +576,6 @@ def get_sigmoid_features_elasticc_perfilter(data_all: pd.DataFrame,
         result.append(nrise[f])
 
     return result
-
->>>>>>> 92ed3225f407959da0b4fdd07235e6ad08f2dd1c
 
 def get_sigmoid_features_dev(data_all: pd.DataFrame):
     """Compute the features needed for the Random Forest classification based
