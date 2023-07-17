@@ -74,15 +74,10 @@ def mask_negative_data(data, low_bound):
        light curve with masked flux
 
         """
-<<<<<<< HEAD
     
     masked_data = data[data['FLUXCAL'].values > low_bound]
+    masked_data.dropna(inplace=True)
     
-=======
-    # Emille does not understand the denominator
-    masked_data = data.mask(data['FLUXCAL'] < low_bound).dropna()#\
-        #.set_index(data['MJD'])[fluxes].dropna()
->>>>>>> 92ed3225f407959da0b4fdd07235e6ad08f2dd1c
     return masked_data
 
 
