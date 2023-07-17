@@ -24,7 +24,8 @@ from actsnfink.sigmoid import fsigmoid
 
 __all__ = ['filter_data', 'mask_negative_data', 'get_fake_df', 'get_fake_fit_parameters',
           'get_fake_results', 'get_ewma_derivative', 'get_sn_ratio', 'get_predicted_flux',
-          'get_data_to_export', 'get_train_test', 'average_intraday_data', 'get_sigmoid_features_dev', 'get_sigmoid_features_elasticc']
+          'get_data_to_export', 'get_train_test', 'average_intraday_data', 'get_sigmoid_features_dev', 'get_sigmoid_features_elasticc',
+          'get_sigmoid_features_elasticc_perfilter']
 
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
