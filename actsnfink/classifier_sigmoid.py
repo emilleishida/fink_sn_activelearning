@@ -414,9 +414,6 @@ def get_sigmoid_features_elasticc(data_all: pd.DataFrame,
                     # perform sigmoid fit
                     [a[i], b[i], c[i]] = fit_sigmoid(dt, rising_flux)
 
-                    # perform sigmoid fit
-                    [a[i], b[i], c[i]] = fit_sigmoid(dt, rising_flux)
-
                     # predicted flux with fit parameters
                     pred_flux = get_predicted_flux(dt, a[i], b[i], c[i])
 
