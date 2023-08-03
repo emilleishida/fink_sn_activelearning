@@ -16,6 +16,7 @@
 import pandas as pd
 import numpy as np
 import random
+from copy import deepcopy
 
 from actsnfink.sigmoid import fit_sigmoid
 from actsnfink.sigmoid import delta_t
@@ -53,7 +54,7 @@ def filter_data(data, filt):
                containing light curves for the selected filter, filt
     """
 
-    data_filt = data.loc[data['FLT'] == filt]
+    data_filt = deepcopy(data.loc[data['FLT'] == filt])
 
     return data_filt
 
@@ -76,7 +77,7 @@ def mask_negative_data(data, low_bound):
 
         """
     
-    masked_data = data[data['FLUXCAL'].values > low_bound]
+    masked_data = deepcopy(data[data['FLUXCAL'].values > low_bound])
     masked_data.dropna(inplace=True)
     
     return masked_data
