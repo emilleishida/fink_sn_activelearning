@@ -165,6 +165,23 @@ def get_ewma_derivative(data, ewma_window):
 
     return ewma_derivative
 
+def get_diff(data):
+    """Difference between each pair of points.
+
+    Parameters
+    ----------
+    data: pandas DataFrame for FLUXCAL
+
+    Return
+    ------
+    diff: pandas DataFrame
+        difference between consecutive data points
+
+    """
+
+    diff = data.diff()
+
+    return diff
 
 def get_sn_ratio(data, data_err):
     """Compute signal to noise ratio
@@ -577,7 +594,8 @@ def get_sigmoid_features_elasticc_perfilter(data_all: pd.DataFrame,
     return result
 
 def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3, 
-                             min_rising_points=1, min_data_points=3):
+                             min_rising_points=1, min_data_points=3,
+                             rising_criteria='ewma'):
     """Compute the features needed for the Random Forest classification based
     on the sigmoid model.
 
@@ -592,6 +610,9 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3,
         Minimum number of rising points. Default is 1.
     min_data_points: int (optional)
         Minimum number of data points. Default is 3.
+    rising_criteria: str (optional)
+        Criteria for defining rising points. Options are 'diff' or 'ewma'.
+        Default is 'ewma'.
 
     Returns
     -------
@@ -624,10 +645,16 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3,
 
         # check minimum number of points per filter
         if len(data_mjd['FLUXCAL'].values) >= min_data_points:
-            # compute the derivative
-            deriv_ewma = get_ewma_derivative(data_mjd['FLUXCAL'], ewma_window)
+
+            if rising_criteria == 'ewma':
+                # compute the derivative
+                rising_c = get_ewma_derivative(data_mjd['FLUXCAL'], ewma_window)
+            elif rising_criteria == 'diff':
+                rising_c = get_diff(data_mjd['FLUXCAL'])
+                      
             # mask data with negative part
-            data_masked = data_mjd.mask(deriv_ewma < 0)
+            data_masked = data_mjd.mask(rising_c < 0)
+                  
             # get longest raising sequence
             rising_data = data_masked.dropna()
 
