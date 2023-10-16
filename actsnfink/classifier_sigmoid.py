@@ -593,8 +593,8 @@ def get_sigmoid_features_elasticc_perfilter(data_all: pd.DataFrame,
 
     return result
 
-def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3, 
-                             min_rising_points=1, min_data_points=3,
+def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=4, 
+                             min_rising_points=2, min_data_points=4,
                              rising_criteria='ewma'):
     """Compute the features needed for the Random Forest classification based
     on the sigmoid model.
