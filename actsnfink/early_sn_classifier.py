@@ -132,8 +132,8 @@ def convert_full_dataset(pdf: pd.DataFrame, obj_id_header='candid'):
 
 def featurize_full_dataset(lc: pd.DataFrame, screen=False,
                            ewma_window=3, 
-                           min_rising_points=1, 
-                           min_data_points=3,
+                           min_rising_points=2, 
+                           min_data_points=4,
                            rising_criteria='ewma'):
     """Get complete feature matrix for all objects in the data set.
     
