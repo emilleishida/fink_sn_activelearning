@@ -622,7 +622,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3,
         # mask negative flux below low bound
         data_mjd = mask_negative_data(data_tmp_avg, low_bound)
 
-        # check data have at least 5 points
+        # check minimum number of points per filter
         if len(data_mjd['FLUXCAL'].values) >= min_data_points:
             # compute the derivative
             deriv_ewma = get_ewma_derivative(data_mjd['FLUXCAL'], ewma_window)
@@ -631,8 +631,8 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3,
             # get longest raising sequence
             rising_data = data_masked.dropna()
 
-            # at least three points (needed for the sigmoid fit)
-            if(len(rising_data) >= min_rising_points):
+            # at least three points (needed for the sigmoid fit) and all points on the rise
+            if(len(rising_data) >= min_rising_points) and len(rising_data) == len(data_mjd):
 
                 # focus on flux
                 rising_time = rising_data['FLUXCAL'].index.values
