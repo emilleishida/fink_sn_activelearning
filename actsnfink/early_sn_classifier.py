@@ -130,7 +130,11 @@ def convert_full_dataset(pdf: pd.DataFrame, obj_id_header='candid'):
     return lc_flux_sig
 
 
-def featurize_full_dataset(lc: pd.DataFrame, screen=False):
+def featurize_full_dataset(lc: pd.DataFrame, screen=False,
+                           ewma_window=3, 
+                           min_rising_points=1, 
+                           min_data_points=3,
+                           rising_criteria='ewma'):
     """Get complete feature matrix for all objects in the data set.
     
     Parameters
@@ -141,6 +145,15 @@ def featurize_full_dataset(lc: pd.DataFrame, screen=False):
     screen: bool (optional)
         If True print on screen the index of light curve being fit.
         Default is False.
+    ewma_window: int (optional)
+        Width of the ewma window. Default is 3.
+    min_rising_points: int (optional)
+        Minimum number of rising points. Default is 1.
+    min_data_points: int (optional)
+        Minimum number of data points. Default is 3.
+    rising_criteria: str (optional)
+        Criteria for defining rising points. Options are 'diff' or 'ewma'.
+        Default is 'ewma'.
         
     Returns
     -------
@@ -173,7 +186,11 @@ def featurize_full_dataset(lc: pd.DataFrame, screen=False):
         features = get_sigmoid_features_dev(lc[obj_flag][['MJD',
                                                           'FLT',
                                                           'FLUXCAL',
-                                                          'FLUXCALERR']])
+                                                          'FLUXCALERR']],
+                                           ewma_window=ewma_window, 
+                                min_rising_points=min_rising_points, 
+                                min_data_points=min_data_points,
+                                rising_criteria=rising_criteria)
         
         for j in range(len(features)):
             line.append(features[j])
