@@ -576,7 +576,8 @@ def get_sigmoid_features_elasticc_perfilter(data_all: pd.DataFrame,
 
     return result
 
-def get_sigmoid_features_dev(data_all: pd.DataFrame):
+def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3, 
+                             min_rising_points=1, min_data_points=3):
     """Compute the features needed for the Random Forest classification based
     on the sigmoid model.
 
@@ -585,6 +586,12 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
     data_all: pd.DataFrame
         Pandas DataFrame with at least ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
         as columns.
+    ewma_window: int (optional)
+        Width of the ewma window. Default is 3.
+    min_rising_points: int (optional)
+        Minimum number of rising points. Default is 1.
+    min_data_points: int (optional)
+        Minimum number of data points. Default is 3.
 
     Returns
     -------
@@ -596,15 +603,6 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
     """
     # lower bound on flux
     low_bound = -10
-
-    # width of the ewma window
-    ewma_window = 3
-
-    # N min data points
-    min_data_points = 3
-
-    # N min rising data points
-    min_rising_points = 1
 
     list_filters = ['g', 'r']
 
@@ -625,7 +623,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
         data_mjd = mask_negative_data(data_tmp_avg, low_bound)
 
         # check data have at least 5 points
-        if len(data_mjd['FLUXCAL'].values) > min_data_points:
+        if len(data_mjd['FLUXCAL'].values) >= min_data_points:
             # compute the derivative
             deriv_ewma = get_ewma_derivative(data_mjd['FLUXCAL'], ewma_window)
             # mask data with negative part
@@ -634,7 +632,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame):
             rising_data = data_masked.dropna()
 
             # at least three points (needed for the sigmoid fit)
-            if(len(rising_data) > min_rising_points):
+            if(len(rising_data) >= min_rising_points):
 
                 # focus on flux
                 rising_time = rising_data['FLUXCAL'].index.values
