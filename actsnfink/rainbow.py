@@ -121,25 +121,20 @@ def fit_rainbow(lc: pd.DataFrame,
     """
 
     # normalize light curve
-    lc_max = max(lc[lc['FLT'] == 'r']['FLUXCAL'])
-    indx_max = list(lc['FLUXCAL'].values).index(lc_max)
-    lc['FLUXCAL'] == lc['FLUXCAL'].values/lc_max
-    lc['FLUXCALERR'] = lc['FLUXCALERR'].values/lc_max
+    lc2 = mask_negative_data(lc, low_bound)
+    
+    lc_max = max(lc2[lc2['FLT'] == 'r']['FLUXCAL'])
+    indx_max = list(lc2['FLUXCAL'].values).index(lc_max)
+    lc3 = pd.DataFrame()
+    lc3['FLUXCAL'] = lc2['FLUXCAL'].values/lc_max
+    lc3['FLUXCALERR'] = lc2['FLUXCALERR'].values/lc_max
+    lc3['MJD'] = lc2['MJD'].values
+    lc3['FLT'] = lc2['FLT'].values
 
-    data_use_list = []
-    for f in list(band_wave_aa.keys()):
-        flag = lc['FLT'] == f
-        if sum(flag) > 1:
-            lc2 = lc[flag]
-            lc3 = lc2.sort_values(by=['MJD'])
-            # average over intraday data points
-            data_tmp_avg = average_intraday_data(lc3)
-            # mask negative flux below low bound
-            data_mjd = mask_negative_data(lc3, low_bound)
-            data_use_list.append(data_mjd)
-
-    data_use_orig = pd.concat(data_use_list, ignore_index=True)
-    data_use = data_use_orig.sort_values(by=['MJD'])
+    lc3['MJD'] = np.where(lc3['MJD'].duplicated(keep=False), 
+                      lc3['MJD'] + lc3.groupby('MJD').cumcount().add(0.25).astype(float),
+                      lc3['MJD'])
+    data_use = deepcopy(lc3.sort_values(by=['MJD'], ignore_index=True))
     
     # extract features
     feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline)
@@ -197,17 +192,23 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
 
     for snid in unique_ids:
         lc = data_all[data_all['id'].values == snid]
-        flag_surv = filter_data_rainbow(lc, rising_criteria=rising_criteria)
+        flag_surv = deepcopy(filter_data_rainbow(lc, rising_criteria=rising_criteria))
     
         if sum(flag_surv.values()) == 2:
             features = fit_rainbow(lc, band_wave_aa=band_wave_aa,
                                   with_baseline=with_baseline)
 
             results_line = [snid] + list(features)
+            results_list.append(results_line)
 
-    results_pd = pd.DataFrame(results_line, 
-                              columns=[id_name, 'a', 't0', 'tfall','trise',
-                                       'Tmin','dT','ksig', 'error',
-                                       'max_flux'])
+    if with_baseline:
+        names = [id_name, 't0', 'amplitude', 'rise_time', 
+                                       'temperature', 'reduced_chi2', 'baseline1', 'baseline2']
+    else:
+        names = [id_name, 't0', 'amplitude', 'rise_time', 
+                                       'temperature', 'reduced_chi2']
+        
+    results_pd = pd.DataFrame(results_list, 
+                              columns=names)
 
     return results_pd
