@@ -25,7 +25,7 @@ from actsnfink.sigmoid import fsigmoid
 
 __all__ = ['filter_data', 'mask_negative_data', 'get_fake_df', 'get_fake_fit_parameters',
           'get_fake_results', 'get_ewma_derivative', 'get_sn_ratio', 'get_predicted_flux',
-          'get_data_to_export', 'get_train_test', 'average_intraday_data', 'get_sigmoid_features_dev', 'get_sigmoid_features_elasticc',
+          'get_data_to_export', 'get_diff', 'get_train_test', 'average_intraday_data', 'get_sigmoid_features_dev', 'get_sigmoid_features_elasticc',
           'get_sigmoid_features_elasticc_perfilter']
 
 
@@ -592,6 +592,7 @@ def get_sigmoid_features_elasticc_perfilter(data_all: pd.DataFrame,
         result.append(nrise[f])
 
     return result
+ 
 
 def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3, 
                              min_rising_points=2, min_data_points=4,
@@ -607,9 +608,9 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3,
     ewma_window: int (optional)
         Width of the ewma window. Default is 3.
     min_rising_points: int (optional)
-        Minimum number of rising points. Default is 1.
+        Minimum number of rising points. Default is 2.
     min_data_points: int (optional)
-        Minimum number of data points. Default is 3.
+        Minimum number of data points. Default is 4.
     rising_criteria: str (optional)
         Criteria for defining rising points. Options are 'diff' or 'ewma'.
         Default is 'ewma'.
