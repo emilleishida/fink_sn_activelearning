@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import pandas as pd
+from progressbar import progressbar
 import numpy as np
 import random
 from copy import deepcopy
@@ -150,7 +151,7 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
                         rising_criteria='ewma', list_filters=['g','r'],
                         low_bound=-10, 
                         band_wave_aa={"g": 4770.0, "r": 6231.0, "i": 7625.0},
-                        with_baseline=False):
+                        with_baseline=False, bar=False):
     """Process an entire data set with Rainbow fit.
 
     Parameters
@@ -178,6 +179,8 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
         Default is for ZTF: {"g": 4770.0, "r": 6231.0, "i": 7625.0} 
     with_baseline: bool (optional)
        Baseline to be considered. Default is False (baseline 0).
+    bar: bool (optional)
+       If True shows progressbar. Default is False.
 
     Returns
     -------
@@ -190,7 +193,12 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
     # get unique ids
     unique_ids = np.unique(data_all['id'].values)
 
-    for snid in unique_ids:
+    if bar:
+        loop = progressbar(unique_ids)
+    else:
+        loop = unique_ids
+
+    for snid in loop:
         lc = data_all[data_all['id'].values == snid]
         flag_surv = deepcopy(filter_data_rainbow(lc, rising_criteria=rising_criteria))
     
