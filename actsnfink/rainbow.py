@@ -125,6 +125,8 @@ def fit_rainbow(lc: pd.DataFrame,
         list of best-fit parameters for the Rainbow model.
     errors: list
         list of uncertainty in each parameter.
+    npoints: int
+        number of points used to fit
     """
 
     # normalize light curve
@@ -139,9 +141,10 @@ def fit_rainbow(lc: pd.DataFrame,
     lc3['FLT'] = lc2['FLT'].values
 
     lc3['MJD'] = np.where(lc3['MJD'].duplicated(keep=False), 
-                      lc3['MJD'] + lc3.groupby('MJD').cumcount().add(0.25).astype(float),
+                      lc3['MJD'] + lc3.groupby('MJD').cumcount().add(0.2).astype(float),
                       lc3['MJD'])
     data_use = deepcopy(lc3.sort_values(by=['MJD'], ignore_index=True))
+    npoints = data_use.shape[0]
     
     # extract features
     feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline,
@@ -149,7 +152,7 @@ def fit_rainbow(lc: pd.DataFrame,
     values, error = feature(data_use['MJD'].values, data_use['FLUXCAL'].values, 
                      sigma=data_use['FLUXCALERR'].values, band=data_use['FLT'].values)
 
-    return values, error
+    return values, error, npoints
 
 
 def fit_rainbow_dataset(data_all: pd.DataFrame, 
@@ -210,38 +213,40 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
 
     for snid in loop:
         lc = data_all[data_all['id'].values == snid]
+        lc.drop_duplicates(inplace=True)
         objid = lc.iloc[0]['objectId']
         type = lc.iloc[0]['type']
         flag_surv = deepcopy(filter_data_rainbow(lc, rising_criteria=rising_criteria))
     
         if sum(flag_surv.values()) == 2:
+            npoints = lc.shape[0]
             features, errors = fit_rainbow(lc, band_wave_aa=band_wave_aa,
                                            with_baseline=with_baseline, 
                                            with_temperature_evolution=with_temperature_evolution)
 
-            results_line = [objid, snid, type] + list(features) + list(errors)
+            results_line = [objid, snid, type, npoints] + list(features) + list(errors)
             results_list.append(results_line)
 
     # build header
     if with_temperature_evolution:
         if with_baseline:
-            names = ['objectId', id_name, 'type','t0', 'amplitude', 'rise_time', 
+            names = ['objectId', id_name, 'type', 'npoints','t0', 'amplitude', 'rise_time', 
                     "Tmin", "delta_T", "k_sig", 'reduced_chi2', 'baseline1', 'baseline2', 
                      't0_err', 'amplitude_err', 'rise_time_err', 
                     'temperature_err', 'baseline1_err', 'baseline2_err']
         else:
-            names = ['objectId', id_name, 'type','t0', 'amplitude', 'rise_time', 
+            names = ['objectId', id_name, 'type', 'npoints','t0', 'amplitude', 'rise_time', 
                     "Tmin", "delta_T", "k_sig", 'reduced_chi2', 't0_err', 'amplitude_err', 
                      'rise_time_err', 
                     'temperature_err']
     else:
         if with_baseline:
-            names = ['objectId', id_name, 'type', 't0', 'amplitude', 'rise_time', 
+            names = ['objectId', id_name, 'type', 'npoints','t0', 'amplitude', 'rise_time', 
                     'temperature', 'reduced_chi2', 'baseline1', 'baseline2',
                     't0_err', 'amplitude_err', 'rise_time_err', 
                     'temperature_err', 'baseline1_err', 'baseline2_err']
         else:
-            names = ['objectId',id_name, 'type','t0', 'amplitude', 'rise_time', 
+            names = ['objectId',id_name, 'type','npoints','t0', 'amplitude', 'rise_time', 
                      'temperature', 'reduced_chi2', 't0_err', 'amplitude_err', 'rise_time_err', 
                     'temperature_err']
         
