@@ -121,8 +121,10 @@ def fit_rainbow(lc: pd.DataFrame,
 
     Returns
     -------
-    features: list
+    values: list
         list of best-fit parameters for the Rainbow model.
+    errors: list
+        list of uncertainty in each parameter.
     """
 
     # normalize light curve
@@ -147,7 +149,7 @@ def fit_rainbow(lc: pd.DataFrame,
     values, error = feature(data_use['MJD'].values, data_use['FLUXCAL'].values, 
                      sigma=data_use['FLUXCALERR'].values, band=data_use['FLT'].values)
 
-    return values
+    return values, error
 
 
 def fit_rainbow_dataset(data_all: pd.DataFrame, 
@@ -209,30 +211,40 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
     for snid in loop:
         lc = data_all[data_all['id'].values == snid]
         objid = lc.iloc[0]['objectId']
+        type = lc.iloc[0]['type']
         flag_surv = deepcopy(filter_data_rainbow(lc, rising_criteria=rising_criteria))
     
         if sum(flag_surv.values()) == 2:
-            features = fit_rainbow(lc, band_wave_aa=band_wave_aa,
-                                   with_baseline=with_baseline, 
-                                   with_temperature_evolution=with_temperature_evolution)
+            features, errors = fit_rainbow(lc, band_wave_aa=band_wave_aa,
+                                           with_baseline=with_baseline, 
+                                           with_temperature_evolution=with_temperature_evolution)
 
-            results_line = [objid, snid] + list(features)
+            results_line = [objid, snid, type] + list(features) + list(errors)
             results_list.append(results_line)
 
-    if not with_temperature_evolution:
+    # build header
+    if with_temperature_evolution:
         if with_baseline:
-            names = ['objectId', id_name, 't0', 'amplitude', 'rise_time', 
-                    'temperature', 'reduced_chi2', 'baseline1', 'baseline2']
+            names = ['objectId', id_name, 'type','t0', 'amplitude', 'rise_time', 
+                    "Tmin", "delta_T", "k_sig", 'reduced_chi2', 'baseline1', 'baseline2', 
+                     't0_err', 'amplitude_err', 'rise_time_err', 
+                    'temperature_err', 'baseline1_err', 'baseline2_err']
         else:
-            names = ['objectId',id_name, 't0', 'amplitude', 'rise_time', 
-                     'temperature', 'reduced_chi2']
+            names = ['objectId', id_name, 'type','t0', 'amplitude', 'rise_time', 
+                    "Tmin", "delta_T", "k_sig", 'reduced_chi2', 't0_err', 'amplitude_err', 
+                     'rise_time_err', 
+                    'temperature_err']
     else:
         if with_baseline:
-            names = ['objectId', id_name, 't0', 'amplitude', 'rise_time', 
-                    "Tmin", "delta_T", "k_sig", 'reduced_chi2', 'baseline1', 'baseline2']
+            names = ['objectId', id_name, 'type', 't0', 'amplitude', 'rise_time', 
+                    'temperature', 'reduced_chi2', 'baseline1', 'baseline2',
+                    't0_err', 'amplitude_err', 'rise_time_err', 
+                    'temperature_err', 'baseline1_err', 'baseline2_err']
         else:
-            names = ['objectId', id_name, 't0', 'amplitude', 'rise_time', 
-                    "Tmin", "delta_T", "k_sig", 'reduced_chi2']
+            names = ['objectId',id_name, 'type','t0', 'amplitude', 'rise_time', 
+                     'temperature', 'reduced_chi2', 't0_err', 'amplitude_err', 'rise_time_err', 
+                    'temperature_err']
+        
         
     results_pd = pd.DataFrame(results_list, 
                               columns=names)
