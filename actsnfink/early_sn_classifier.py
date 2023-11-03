@@ -125,7 +125,11 @@ def convert_full_dataset(pdf: pd.DataFrame, obj_id_header='candid',
                 fluxcal_err.append(f1err)
         
             for i in range(len(fluxcal)):
-                lc_flux_sig.append([objid, name, sntype, mjd[i], filters[f - 1],
+                if keep_objid:
+                    lc_flux_sig.append([objid, name, sntype, mjd[i], filters[f - 1],
+                                    fluxcal[i], fluxcal_err[i]])
+                else:
+                    lc_flux_sig.append([name, sntype, mjd[i], filters[f - 1],
                                     fluxcal[i], fluxcal_err[i]])
 
     if keep_objid:
