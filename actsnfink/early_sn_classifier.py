@@ -59,7 +59,8 @@ def mag2fluxcal_snana(magpsf: float, sigmapsf: float):
     return fluxcal, fluxcal_err
 
 
-def convert_full_dataset(pdf: pd.DataFrame, obj_id_header='candid'):
+def convert_full_dataset(pdf: pd.DataFrame, obj_id_header='candid',
+                        keep_objid=False):
     """Convert an entire data set from mag to fluxcal.
     
     Parameters
@@ -69,11 +70,14 @@ def convert_full_dataset(pdf: pd.DataFrame, obj_id_header='candid'):
     obj_id_header: str (optional)
         Object identifier. Options are ['objectId', 'candid'].
         Default is 'candid'.
+    keep_objid: bool (optional)
+        If True, keep store 'objectId' beyond "obj_id_header". 
+        Default is False
         
     Returns
     -------
     pd.DataFrame
-        Columns are ['objectId', 'type', 'MJD', 'FLT', 
+        Columns are [obj_id_header, 'type', 'MJD', 'FLT', 
         'FLUXCAL', 'FLUXCALERR'].
     """
     # Ia types in TNS
@@ -87,6 +91,7 @@ def convert_full_dataset(pdf: pd.DataFrame, obj_id_header='candid'):
 
     for index in range(pdf.shape[0]):
 
+        objid = pdf['objectId'].values[index]
         name = pdf[obj_id_header].values[index]
         
         sntype_orig = pdf['TNS'].values[index]
@@ -120,12 +125,15 @@ def convert_full_dataset(pdf: pd.DataFrame, obj_id_header='candid'):
                 fluxcal_err.append(f1err)
         
             for i in range(len(fluxcal)):
-                lc_flux_sig.append([name, sntype, mjd[i], filters[f - 1],
+                lc_flux_sig.append([objid, name, sntype, mjd[i], filters[f - 1],
                                     fluxcal[i], fluxcal_err[i]])
 
-    lc_flux_sig = pd.DataFrame(lc_flux_sig, columns=['id', 'type', 'MJD', 
-                                                     'FLT', 'FLUXCAL', 
-                                                     'FLUXCALERR'])
+    if keep_objid:
+        names = ['objectId', 'id', 'type', 'MJD','FLT', 'FLUXCAL','FLUXCALERR']
+    else:
+        names = ['id', 'type', 'MJD','FLT', 'FLUXCAL','FLUXCALERR']
+        
+    lc_flux_sig = pd.DataFrame(lc_flux_sig, columns=names)
 
     return lc_flux_sig
 

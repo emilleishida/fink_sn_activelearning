@@ -99,7 +99,8 @@ def filter_data_rainbow(data_all: pd.DataFrame, ewma_window=3,
 
 def fit_rainbow(lc: pd.DataFrame, 
                 band_wave_aa={"g": 4770.0, "r": 6231.0, "i": 7625.0},
-                with_baseline=False, low_bound=-10):
+                with_baseline=False, low_bound=-10,
+                with_temperature_evolution=False):
     """Use Rainbow to fit light curve.
 
     Parameters
@@ -114,6 +115,9 @@ def fit_rainbow(lc: pd.DataFrame,
         Baseline to be considered. Default is False (baseline 0).
     low_bound: float (optional)
         Lower bound of FLUXCAL to consider. Default is -10.
+    with_temperature_evolution: bool (optional)
+       If True use declining sigmoid for temperature evolution.
+       Default is False.
 
     Returns
     -------
@@ -138,8 +142,9 @@ def fit_rainbow(lc: pd.DataFrame,
     data_use = deepcopy(lc3.sort_values(by=['MJD'], ignore_index=True))
     
     # extract features
-    feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline)
-    values = feature(data_use['MJD'].values, data_use['FLUXCAL'].values, 
+    feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline,
+                                      with_temperature_evolution=with_temperature_evolution)
+    values, error = feature(data_use['MJD'].values, data_use['FLUXCAL'].values, 
                      sigma=data_use['FLUXCALERR'].values, band=data_use['FLT'].values)
 
     return values
@@ -151,13 +156,13 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
                         rising_criteria='ewma', list_filters=['g','r'],
                         low_bound=-10, 
                         band_wave_aa={"g": 4770.0, "r": 6231.0, "i": 7625.0},
-                        with_baseline=False, bar=False):
+                        with_baseline=False, bar=False, with_temperature_evolution=False):
     """Process an entire data set with Rainbow fit.
 
     Parameters
     ----------
     data_all: pd.DataFrame
-        Pandas DataFrame with at least ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
+        Pandas DataFrame with at least ['objectId','MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
         as columns.
     ewma_window: int (optional)
         Width of the ewma window. Default is 3.
@@ -181,6 +186,9 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
        Baseline to be considered. Default is False (baseline 0).
     bar: bool (optional)
        If True shows progressbar. Default is False.
+    with_temperature_evolution: bool (optional)
+       If True use declining sigmoid for temperature evolution.
+       Default is False.
 
     Returns
     -------
@@ -200,21 +208,31 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
 
     for snid in loop:
         lc = data_all[data_all['id'].values == snid]
+        objid = lc.iloc[0]['objectId']
         flag_surv = deepcopy(filter_data_rainbow(lc, rising_criteria=rising_criteria))
     
         if sum(flag_surv.values()) == 2:
             features = fit_rainbow(lc, band_wave_aa=band_wave_aa,
-                                  with_baseline=with_baseline)
+                                   with_baseline=with_baseline, 
+                                   with_temperature_evolution=with_temperature_evolution)
 
-            results_line = [snid] + list(features)
+            results_line = [objid, snid] + list(features)
             results_list.append(results_line)
 
-    if with_baseline:
-        names = [id_name, 't0', 'amplitude', 'rise_time', 
-                                       'temperature', 'reduced_chi2', 'baseline1', 'baseline2']
+    if not with_temperature_evolution:
+        if with_baseline:
+            names = ['objectId', id_name, 't0', 'amplitude', 'rise_time', 
+                    'temperature', 'reduced_chi2', 'baseline1', 'baseline2']
+        else:
+            names = ['objectId',id_name, 't0', 'amplitude', 'rise_time', 
+                     'temperature', 'reduced_chi2']
     else:
-        names = [id_name, 't0', 'amplitude', 'rise_time', 
-                                       'temperature', 'reduced_chi2']
+        if with_baseline:
+            names = ['objectId', id_name, 't0', 'amplitude', 'rise_time', 
+                    "Tmin", "delta_T", "k_sig", 'reduced_chi2', 'baseline1', 'baseline2']
+        else:
+            names = ['objectId', id_name, 't0', 'amplitude', 'rise_time', 
+                    "Tmin", "delta_T", "k_sig", 'reduced_chi2']
         
     results_pd = pd.DataFrame(results_list, 
                               columns=names)
