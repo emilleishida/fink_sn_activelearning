@@ -218,9 +218,8 @@ def fit_rainbow_dataset(data_all: pd.DataFrame,
         type = lc.iloc[0]['type']
         flag_surv = deepcopy(filter_data_rainbow(lc, rising_criteria=rising_criteria))
     
-        if sum(flag_surv.values()) == 2:
-            npoints = lc.shape[0]
-            features, errors = fit_rainbow(lc, band_wave_aa=band_wave_aa,
+        if sum(flag_surv.values()) > 1 and lc.shape[0] >= min_data_points:
+            features, errors, npoints = fit_rainbow(lc, band_wave_aa=band_wave_aa,
                                            with_baseline=with_baseline, 
                                            with_temperature_evolution=with_temperature_evolution)
 
