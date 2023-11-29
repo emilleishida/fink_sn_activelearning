@@ -14,23 +14,75 @@
 # limitations under the License.
 
 import pandas as pd
-from progressbar import progressbar
 import numpy as np
 import random
 from copy import deepcopy
 
-
-from actsnfink.classifier_sigmoid import *
 from light_curve.light_curve_py import RainbowFit
 
-__all__ = ['filter_data_rainbow', 'fit_rainbow', 'fit_rainbow_dataset']
+__all__ = ['extract_history', 'extract_field', 
+           'filter_data_rainbow', 'fit_rainbow']
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
 
+def extract_history(history_list: list, field: str) -> list:
+    """Extract the historical measurements contained in the alerts
+    for the parameter `field`.
 
-def filter_data_rainbow(data_all: pd.DataFrame, ewma_window=3, 
-                min_rising_points=1, min_data_points=7,
-                rising_criteria='ewma', list_filters=['g','r'],
+    Parameters
+    ----------
+    history_list: list of dict
+        List of dictionary from alert[history].
+    field: str
+        The field name for which you want to extract the data. It must be
+        a key of elements of history_list
+    
+    Returns
+    ----------
+    measurement: list
+        List of all the `field` measurements contained in the alerts.
+    """
+    if history_list is None:
+        return []
+    try:
+        measurement = [obs[field] for obs in history_list]
+    except KeyError:
+        print('{} not in history data'.format(field))
+        measurement = []
+
+    return measurement
+
+def extract_field(alert: dict, category: str, field: str) -> np.array:
+    """ Concatenate current and historical observation data for a given field.
+    
+    Parameters
+    ----------
+    alert: dict
+        Dictionnary containing alert data
+    category: str
+        prvDiaSources or prvDiaForcedSources
+    field: str
+        Name of the field to extract.
+    
+    Returns
+    ----------
+    data: np.array
+        List containing previous measurements and current measurement at the
+        end. If `field` is not in the category, data will be
+        [alert['diaSource'][field]].
+    """
+    data = np.concatenate(
+        [
+            extract_history(alert[category], field),
+            [alert["diaSource"][field]]
+        ]
+    )
+    return data
+
+
+def filter_data_rainbow(mjd, flt, flux,
+                min_data_points=7,
+                list_filters=['g','r'],
                 low_bound=-10):
     """Filter only rising alerts for Rainbow fit.
 
@@ -39,15 +91,8 @@ def filter_data_rainbow(data_all: pd.DataFrame, ewma_window=3,
     data_all: pd.DataFrame
         Pandas DataFrame with at least ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
         as columns.
-    ewma_window: int (optional)
-        Width of the ewma window. Default is 3.
-    min_rising_points: int (optional)
-        Minimum number of rising points per filter. Default is 1.
     min_data_points: int (optional)
         Minimum number of data points in all filters. Default is 7.
-    rising_criteria: str (optional)
-        Criteria for defining rising points. Options are 'diff' or 'ewma'.
-        Default is 'ewma'.
     list_filters: list (optional)
         List of filters to consider. Default is ['g', 'r'].
     low_bound: float (optional)
@@ -58,49 +103,57 @@ def filter_data_rainbow(data_all: pd.DataFrame, ewma_window=3,
     filter_flags: dict
         Dictionary if light curve survived selection cuts.
     """
-
-    # flags if filter survived selection cuts
-    filter_flags = dict([[item, False] for item in list_filters])
-
-    if data_all.shape[0] >= min_data_points:
     
-        for i in list_filters:
-            # select filter
-            data_tmp = filter_data(data_all[columns_to_keep], i)
-            # average over intraday data points
-            data_tmp_avg = average_intraday_data(data_tmp)
-            # mask negative flux below low bound
-            data_mjd = mask_negative_data(data_tmp_avg, low_bound)
-  
-            # we need at least 1 point in each filter
-            if len(data_mjd['FLUXCAL'].values) > 0:
-                if rising_criteria == 'ewma':
-                    # compute the derivative
-                    rising_c = get_ewma_derivative(data_mjd['FLUXCAL'], ewma_window)
-                elif rising_criteria == 'diff':
-                    rising_c = get_diff(data_mjd['FLUXCAL'])
-                      
-                # mask data with negative part
-                data_masked = data_mjd.mask(rising_c < 0)
-                  
-                # get longest raising sequence
-                rising_data = data_masked.dropna()
+    
+    is_sorted = lambda a: np.all(a[:-1] <= a[1:])
+    
+    if is_sorted(mjd):
 
-                # count points on the rise
-                if(len(rising_data) >= min_rising_points) and len(rising_data) == len(data_mjd):
+        # flags if filter survived selection cuts
+        filter_flags = dict([[item, False] for item in list_filters])
+
+        if mjd.shape[0] >= min_data_points:
+    
+            for i in list_filters:
+                filter_flag = flt == i
+            
+                # mask negative flux below low bound
+                flux_flag = flux >= low_bound
+            
+                final_flag = np.logical_and(filter_flag, flux_flag)
+    
+                # select filter
+                flux_filter = flux[final_flag]
+
+                lc = pd.DataFrame()
+                lc['FLUXCAL'] = flux_filter
+                lc['MJD'] = 0.1*mjd[final_flag]
+                
+                # check if it is rising
+                avg_data = average_intraday_data(lc)
+                flux_sorted = is_sorted(avg_data['FLUXCAL'].values)
+
+                if flux_sorted:
                     filter_flags[i] = True
                 else:
                     filter_flags[i] = False
-            else:
+        else:
+            for i in list_filters:
                 filter_flags[i] = False
-
+            
+    else:
+        raise ValueError('MJD is not sorted!')
+        
     return filter_flags
 
 
-def fit_rainbow(lc: pd.DataFrame, 
+def fit_rainbow(mjd, flt, flux, fluxerr, 
                 band_wave_aa={"g": 4770.0, "r": 6231.0, "i": 7625.0},
-                with_baseline=False, low_bound=-10,
-                with_temperature_evolution=False):
+                with_baseline=False, 
+                with_temperature_evolution=False,
+                min_data_points=7,
+                list_filters=['g','r'],
+                low_bound=-10):
     """Use Rainbow to fit light curve.
 
     Parameters
@@ -128,129 +181,29 @@ def fit_rainbow(lc: pd.DataFrame,
     npoints: int
         number of points used to fit
     """
-
-    # normalize light curve
-    lc2 = mask_negative_data(lc, low_bound)
     
-    lc_max = max(lc2[lc2['FLT'] == 'r']['FLUXCAL'])
-    indx_max = list(lc2['FLUXCAL'].values).index(lc_max)
-    lc3 = pd.DataFrame()
-    lc3['FLUXCAL'] = lc2['FLUXCAL'].values/lc_max
-    lc3['FLUXCALERR'] = lc2['FLUXCALERR'].values/lc_max
-    lc3['MJD'] = lc2['MJD'].values
-    lc3['FLT'] = lc2['FLT'].values
+    filter_flag =  filter_data_rainbow(mjd, flt, flux, 
+                     min_data_points=min_data_points,
+                     list_filters=['g', 'r', 'i', 'z'],
+                     low_bound=low_bound)
 
-    lc3['MJD'] = np.where(lc3['MJD'].duplicated(keep=False), 
-                      lc3['MJD'] + lc3.groupby('MJD').cumcount().add(0.2).astype(float),
-                      lc3['MJD'])
-    data_use = deepcopy(lc3.sort_values(by=['MJD'], ignore_index=True))
-    npoints = data_use.shape[0]
+    # at least one filter survived
+    if sum(filter_flag.values()) > 2:
+        # normalize light curve    
+
+        lc_max = max(flux)
+        flux_norm = flux/lc_max
+        fluxerr_norm = fluxerr/lc_max
     
-    # extract features
-    feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline,
+        npoints = flux_norm.shape[0]
+    
+        # extract features
+        feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline,
                                       with_temperature_evolution=with_temperature_evolution)
-    values, error = feature(data_use['MJD'].values, data_use['FLUXCAL'].values, 
-                     sigma=data_use['FLUXCALERR'].values, band=data_use['FLT'].values)
+        values, error = feature(mjd, flux_norm, 
+                     sigma=fluxerr_norm, band=flt)
 
-    return values, error, npoints
-
-
-def fit_rainbow_dataset(data_all: pd.DataFrame, 
-                        id_name='id', ewma_window=3, 
-                        min_rising_points=1, min_data_points=7,
-                        rising_criteria='ewma', list_filters=['g','r'],
-                        low_bound=-10, 
-                        band_wave_aa={"g": 4770.0, "r": 6231.0, "i": 7625.0},
-                        with_baseline=False, bar=False, with_temperature_evolution=False):
-    """Process an entire data set with Rainbow fit.
-
-    Parameters
-    ----------
-    data_all: pd.DataFrame
-        Pandas DataFrame with at least ['objectId','MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
-        as columns.
-    ewma_window: int (optional)
-        Width of the ewma window. Default is 3.
-    id_name: str (optional)
-        String identifying the column for each object. Default is 'id'.
-    min_rising_points: int (optional)
-        Minimum number of rising points per filter. Default is 1.
-    min_data_points: int (optional)
-        Minimum number of data points in all filters. Default is 7.
-    rising_criteria: str (optional)
-        Criteria for defining rising points. Options are 'diff' or 'ewma'.
-        Default is 'ewma'.
-    list_filters: list (optional)
-        List of filters to consider. Default is ['g', 'r'].
-    low_bound: float (optional)
-        Lower bound of FLUXCAL to consider. Default is -10.      
-    band_wave_aa: dict (optional)
-        Dictionary with effective wavelength for each filter. 
-        Default is for ZTF: {"g": 4770.0, "r": 6231.0, "i": 7625.0} 
-    with_baseline: bool (optional)
-       Baseline to be considered. Default is False (baseline 0).
-    bar: bool (optional)
-       If True shows progressbar. Default is False.
-    with_temperature_evolution: bool (optional)
-       If True use declining sigmoid for temperature evolution.
-       Default is False.
-
-    Returns
-    -------
-    rainbow_fits: pd.DataFrame
-         Ids and Rainbow features for all ids surviving cuts.
-    """
-    # store results
-    results_list = []
+        return values
     
-    # get unique ids
-    unique_ids = np.unique(data_all['id'].values)
-
-    if bar:
-        loop = progressbar(unique_ids)
     else:
-        loop = unique_ids
-
-    for snid in loop:
-        lc = data_all[data_all['id'].values == snid]
-        lc.drop_duplicates(inplace=True)
-        objid = lc.iloc[0]['objectId']
-        type = lc.iloc[0]['type']
-        flag_surv = deepcopy(filter_data_rainbow(lc, rising_criteria=rising_criteria))
-    
-        if sum(flag_surv.values()) > 1 and lc.shape[0] >= min_data_points:
-            features, errors, npoints = fit_rainbow(lc, band_wave_aa=band_wave_aa,
-                                           with_baseline=with_baseline, 
-                                           with_temperature_evolution=with_temperature_evolution)
-
-            results_line = [objid, snid, type, npoints] + list(features) + list(errors)
-            results_list.append(results_line)
-
-    # build header
-    if with_temperature_evolution:
-        if with_baseline:
-            names = ['objectId', id_name, 'type', 'npoints','t0', 'amplitude', 'rise_time', 
-                    "Tmin", "delta_T", "k_sig", 'reduced_chi2', 'baseline1', 'baseline2', 
-                     't0_err', 'amplitude_err', 'rise_time_err', 
-                    'temperature_err', 'baseline1_err', 'baseline2_err']
-        else:
-            names = ['objectId', id_name, 'type', 'npoints','t0', 'amplitude', 'rise_time', 
-                    "Tmin", "delta_T", "k_sig", 'reduced_chi2', 't0_err', 'amplitude_err', 
-                     'rise_time_err', 
-                    'temperature_err']
-    else:
-        if with_baseline:
-            names = ['objectId', id_name, 'type', 'npoints','t0', 'amplitude', 'rise_time', 
-                    'temperature', 'reduced_chi2', 'baseline1', 'baseline2',
-                    't0_err', 'amplitude_err', 'rise_time_err', 
-                    'temperature_err', 'baseline1_err', 'baseline2_err']
-        else:
-            names = ['objectId',id_name, 'type','npoints','t0', 'amplitude', 'rise_time', 
-                     'temperature', 'reduced_chi2', 't0_err', 'amplitude_err', 'rise_time_err', 
-                    'temperature_err']
-        
-        
-    results_pd = pd.DataFrame(results_list, 
-                              columns=names)
-
-    return results_pd
+        return [0]
