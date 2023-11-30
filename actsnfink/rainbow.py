@@ -19,6 +19,7 @@ import random
 from copy import deepcopy
 
 from light_curve.light_curve_py import RainbowFit
+from actsnfink.classifier_sigmoid import average_intraday_data
 
 __all__ = ['extract_history', 'extract_field', 
            'filter_data_rainbow', 'fit_rainbow']
