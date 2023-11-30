@@ -18,7 +18,7 @@ import numpy as np
 import random
 from copy import deepcopy
 
-from light_curve.light_curve_py import RainbowFit
+from light_curve.light_curve_py import RainbowRisingFit
 from actsnfink.classifier_sigmoid import average_intraday_data
 
 __all__ = ['extract_history', 'extract_field', 
@@ -151,7 +151,6 @@ def filter_data_rainbow(mjd, flt, flux,
 def fit_rainbow(mjd, flt, flux, fluxerr, 
                 band_wave_aa={"g": 4770.0, "r": 6231.0, "i": 7625.0},
                 with_baseline=False, 
-                with_temperature_evolution=False,
                 min_data_points=7,
                 list_filters=['g','r'],
                 low_bound=-10):
@@ -169,9 +168,6 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
         Baseline to be considered. Default is False (baseline 0).
     low_bound: float (optional)
         Lower bound of FLUXCAL to consider. Default is -10.
-    with_temperature_evolution: bool (optional)
-       If True use declining sigmoid for temperature evolution.
-       Default is False.
 
     Returns
     -------
@@ -199,12 +195,11 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
         npoints = flux_norm.shape[0]
     
         # extract features
-        feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline,
-                                      with_temperature_evolution=with_temperature_evolution)
-        values, error = feature(mjd, flux_norm, 
-                     sigma=fluxerr_norm, band=flt)
+        feature = RainbowRisingFit.from_angstrom(band_wave_aa, with_baseline=with_baseline)
+        values = feature(mjd, flux_norm, 
+                         sigma=fluxerr_norm, band=flt)
 
         return values
     
     else:
-        return [0]
+        return [0 for i in range(7)]
