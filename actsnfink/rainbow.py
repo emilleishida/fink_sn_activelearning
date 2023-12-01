@@ -202,4 +202,4 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
         return list(values) + [lc_max]
     
     else:
-        return [0 for i in range(7)]
+        return [0 for i in range(8)]
