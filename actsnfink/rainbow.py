@@ -22,7 +22,7 @@ from light_curve.light_curve_py import RainbowRisingFit
 from actsnfink.classifier_sigmoid import average_intraday_data
 
 __all__ = ['extract_history', 'extract_field', 
-           'filter_data_rainbow', 'fit_rainbow', 'lc_max']
+           'filter_data_rainbow', 'fit_rainbow']
 
 columns_to_keep = ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
 
