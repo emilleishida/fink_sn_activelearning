@@ -181,7 +181,7 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
     
     filter_flag =  filter_data_rainbow(mjd, flt, flux, 
                      min_data_points=min_data_points,
-                     list_filters=['g', 'r', 'i', 'z'],
+                     list_filters=list_filters,
                      low_bound=low_bound)
 
     # at least one filter survived
