@@ -18,7 +18,7 @@ import numpy as np
 import random
 from copy import deepcopy
 
-from light_curve.light_curve_py import RainbowRisingFit
+from light_curve.light_curve_py import RainbowFit
 from actsnfink.classifier_sigmoid import average_intraday_data
 
 __all__ = ['extract_history', 'extract_field', 
@@ -195,11 +195,19 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
         npoints = flux_norm.shape[0]
     
         # extract features
-        feature = RainbowRisingFit.from_angstrom(band_wave_aa, with_baseline=with_baseline)
-        values = feature(mjd, flux_norm, 
-                         sigma=fluxerr_norm, band=flt)
+        feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline,
+                                           bolometric='sigmoid', temperature='sigmoid')
+        
+        try:
+            values = feature(mjd, flux_norm, 
+                             sigma=fluxerr_norm, band=flt)
+            
+            res = list(values) + [lc_max]
+            
+        except RuntimeError:
+            res = [0 for i in range(8)]
 
-        return list(values) + [lc_max]
+        return res
     
     else:
         return [0 for i in range(8)]
