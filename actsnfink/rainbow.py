@@ -128,7 +128,7 @@ def filter_data_rainbow(mjd, flt, flux,
 
                 lc = pd.DataFrame()
                 lc['FLUXCAL'] = flux_filter
-                lc['MJD'] = 0.1*mjd[final_flag]
+                lc['MJD'] = mjd[final_flag]
                 
                 # check if it is rising
                 avg_data = average_intraday_data(lc)
