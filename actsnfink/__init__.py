@@ -16,7 +16,6 @@
 from actsnfink.early_sn_classifier import *
 from actsnfink.classifier_sigmoid import *
 from actsnfink.sigmoid import *
-from actsnfink.rainbow import *
 
 __all__ = [
     'average_intraday_data',
@@ -30,8 +29,6 @@ __all__ = [
     'errfunc_sigmoid',
     'featurize_full_dataset',
     'filter_data',
-    'filter_data_rainbow',
-    'fit_rainbow',
     'fit_sigmoid',
     'fsigmoid',
     'get_data_to_export',
