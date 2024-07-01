@@ -21,8 +21,6 @@ __all__ = [
     'average_intraday_data',
     'build_matrix',
     'build_samples',
-    'extract_field',
-    'extract_history',
     'convert_full_dataset',
     'compute_mse',
     'delta_t',
