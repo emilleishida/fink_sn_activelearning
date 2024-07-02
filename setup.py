@@ -21,6 +21,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     py_modules=['classifier_sigmoid',
                 'early_sn_classifier',
+                'rainbow',
                 'sigmoid'],
     scripts=['actsnfink/scripts/run_loop.py'],
     url='https://github.com/emilleishida/fink_sn_activelearning',
