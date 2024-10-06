@@ -83,13 +83,13 @@ def read_samples_sequential_sets(fname_train: str, fname_queried:str,
     data.features_names = features_names
     data.metadata_names = meta_names
 
-    data.train_features = new_train.values
+    data.train_features = new_train[features_names].values
     data.train_metadata = deepcopy(new_train[meta_names])
     data.train_metadata.rename(columns={use_alertid:'id'}, inplace=True)
     train_labels = new_train['type'].values == 'Ia'
     data.labels = train_labels.astype(int)
 
-    data.test_features = new_test.values
+    data.test_features = new_test[features_names].values
     data.test_metadata = deepcopy(new_test[meta_names])
     data.test_metadata.rename(columns={use_alertid:'id'}, inplace=True)
     # test_labels = new_test['type'].values == 'Ia'
