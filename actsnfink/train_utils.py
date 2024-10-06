@@ -16,6 +16,9 @@
 from actsnclass import DataBase
 from copy import deepcopy
 
+import pandas as pd
+import numpy as np
+
 def read_samples_sequential_sets(fname_train: str, fname_queried:str,
                                  fname_available: str, n: int, 
                                  meta_names=['id','type'],
