@@ -216,15 +216,14 @@ def featurize_full_dataset(lc: pd.DataFrame, screen=False,
 
 # this was taken from https://github.com/COINtoolbox/ActSNClass/blob/master/actsnclass/database.py
 def build_samples(features: pd.DataFrame, initial_training: int,
-                 frac_Ia=0.5, screen=False):
+                 frac_Ia=0.5, screen=False, meta_names=['id', 'type']):
     """Build initial samples for Active Learning loop.
     
     Parameters
     ----------
     features: pd.DataFrame
-        Complete feature matrix. Columns are: ['objectId', 'type', 
-        'a_g', 'b_g', 'c_g', 'snratio_g', 'mse_g', 'nrise_g', 
-        'a_r', 'b_r', 'c_r', 'snratio_r', 'mse_r', 'nrise_r']
+        Complete feature matrix, including metadata and headers.
+        Column "type" must include "Ia".
         
     initial_training: int
         Number of objects in the training sample.
@@ -233,12 +232,20 @@ def build_samples(features: pd.DataFrame, initial_training: int,
     screen: bool (optional)
         If True, print intermediary information to screen.
         Default is False.
+    meta_names: str (optional)
+        List of strings identifying metadata (not used for feature extraction).
         
     Returns
     -------
     actsnclass.DataBase
         DataBase for active learning loop
     """
+    # get names of useful columns
+    features_names = list(features.keys())
+    for name in meta_names:
+        features_names.remove(name)
+    
+    
     data = DataBase()
     
     # initialize the temporary label holder
@@ -266,19 +273,19 @@ def build_samples(features: pd.DataFrame, initial_training: int,
     
     train_Ia_flag = features['type'].values[train_flag] == 'Ia'
     data.train_labels = train_Ia_flag.astype(int)
-    data.train_features = features[train_flag].values[:,2:]
-    data.train_metadata = features[['id', 'type']][train_flag]
+    data.train_features = features[train_flag][features_names].values
+    data.train_metadata = features[train_flag][meta_names]
     
     # set test set as all objs apart from those in training
     test_indexes = np.array([i for i in range(features.shape[0])
                              if i not in train_indexes])
     test_ia_flag = features['type'].values[test_indexes] == 'Ia'
     data.test_labels = test_ia_flag.astype(int)
-    data.test_features = features[~train_flag].values[:, 2:]
-    data.test_metadata = features[['id', 'type']][~train_flag]
+    data.test_features = features[~train_flag][features_names].values
+    data.test_metadata = features[~train_flag][meta_names]
     
     # set metadata names
-    data.metadata_names = ['id', 'type']
+    data.metadata_names = meta_names
     
     # set everyone to queryable
     data.queryable_ids = data.test_metadata['id'].values
