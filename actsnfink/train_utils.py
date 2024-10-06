@@ -81,7 +81,6 @@ def read_samples_sequential_sets(fname_train: str, fname_queried:str,
         features_names.remove(item)
     
     data.features_names = features_names
-    data.metadata_names = meta_names
 
     data.train_features = new_train[features_names].values
     data.train_metadata = deepcopy(new_train[meta_names])
@@ -97,6 +96,9 @@ def read_samples_sequential_sets(fname_train: str, fname_queried:str,
 
     # mark all as queryable
     data.queryable_ids = data.test_metadata['id'].values
+
+    # update metadata names -- it needs to have 'id'
+    data.metadata_names = list(data.train_metadata.keys())
 
     print('Number of Ia in training: ', sum(data.train_labels))
     print('Number of Ia in test: ', sum(data.test_labels))
