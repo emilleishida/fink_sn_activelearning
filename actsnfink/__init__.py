@@ -16,6 +16,7 @@
 from actsnfink.early_sn_classifier import *
 from actsnfink.classifier_sigmoid import *
 from actsnfink.sigmoid import *
+from actsnfink.train_utils import *
 
 __all__ = [
     'average_intraday_data',
@@ -41,4 +42,5 @@ __all__ = [
     'learn_loop',
     'mag2fluxcal_snana',
     'mask_negative_data',
-    'read_initial_samples']
+    'read_initial_samples',
+    'read_samples_sequential_sets']
