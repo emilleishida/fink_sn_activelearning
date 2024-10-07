@@ -100,8 +100,10 @@ def read_samples_sequential_sets(fname_train: str, fname_queried:str,
     # update metadata names -- it needs to have 'id'
     data.metadata_names = list(data.train_metadata.keys())
 
-    print('Number of Ia in training: ', sum(data.train_labels))
-    print('Number of Ia in test: ', sum(data.test_labels))
+    print('Number of objects in training: ', data.train_labels.shape[0])
+    print('                  of which Ia: ', sum(data.train_labels))
+    print('Number of objects in test: ', data.test_labels.shape[0])
+    print('              of which Ia: ', sum(data.test_labels))
 
     return data
 
