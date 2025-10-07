@@ -47,7 +47,7 @@ def main():
                                         # to be used as part of the raw data
 
     mlflow_uri = "http://localhost:5000"     # address of mlflow server
-    mlflow_exp = 'finksnclass_ztf_'          # root name for this experiment run
+    mlflow_exp = 'finksnclass_ztf'          # root name for this experiment run
     
     drop_zeros = True                   # ignore objects with observations in only 1 filter
     screen = True                       # print debug comments to screen
@@ -133,7 +133,8 @@ def main():
                    output_metrics_file=output_metrics_file, 
                    output_queried_file=output_queried_file,
                    classifier='RandomForest', seed=None,
-                   batch=1, screen=True, output_prob_root=output_prob_root)
+                   batch=1, screen=True, output_prob_root=output_prob_root, mlflow_uri=mlflow_uri, 
+                   mlflow_exp=mlflow_exp, features_names=features_names)
     
 if __name__ == '__main__':
     main()

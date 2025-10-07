@@ -14,7 +14,9 @@
 # limitations under the License.
 
 import actsnclass
+import json
 import mlflow
+from mlflow.models.signature import infer_signature
 import pandas as pd
 import numpy as np
 import os
@@ -304,7 +306,7 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                output_metrics_file: str, output_queried_file: str,
                classifier='RandomForest', batch=1, screen=True, 
                output_prob_root=None, seed=42, nest=1000, mlflow_uri=None,
-               mlflow_exp=None):
+               mlflow_exp=None, features_names=None):
     """Perform the active learning loop. All results are saved to file.
     
     Parameters
@@ -343,8 +345,7 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
 
         mlflow.set_tracking_uri(mlflow_uri)   # set mlflow remote uri
         mlflow.set_experiment(mlflow_exp)     # determine experiment name
-        mlflow.autolog()                      # log predetermined parameters
-
+       
     for loop in range(nloops):
 
         if screen:
@@ -383,7 +384,7 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                 meta_info = {
                    "n_train": data.train_labels.shape[0],
                    "n_test": data.test_labels.shape[0],
-                   "n_queried": data.queried_sample.shape[0],
+                   "n_queried": len(data.queried_sample),
                    "n_queryable": data.queryable_ids.shape[0]
                 }
     
@@ -396,24 +397,29 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                 mlflow.log_param('strategy', strategy)
                 mlflow.log_param('classifier', classifier)
                 mlflow.log_param('batch', batch)
+                mlflow.log_param('seed', seed)
+                mlflow.log_param('nest', nest)
 
                 # log metrics
                 for i in range(len(data.metrics_list_names)):
                     mlflow.log_metric(data.metrics_list_names[i], data.metrics_list_values[i])
 
                 # log signature
-                signature = infer_signature(data.train_features, data.train_model.predict(data.train_features))
+                signature = infer_signature(data.train_features, data.trained_model.predict(data.train_features))
                 mlflow.sklearn.log_model(
-                    data.train_model,
-                    artifact_path=ARTIFACT_PATH,
-                    signature=signature,
-                    input_example=X_train.iloc[:2]
+                    data.trained_model,
+                    name ='actsnfink_',
+                    signature = signature,
+                    input_example = data.test_features[:2]
                  )
 
-    # Save training state
-    mlflow.log_artifact(f"{EXPERIMENT}_training_ids.csv")
-    # TODO: Save the data as well
-        
+                # Saving output file
+                mlflow.log_artifact(output_metrics_file)
+                mlflow.log_artifact(output_queried_file)
+
+                # Saving datasets
+                train = pd.DataFrame(data.train_features, columns=features_names)
+                mlflow.log_table(train, artifact_file='training_features.parquet')
         
         
 def build_matrix(fname_output: str, dirname_input: str, n: int,
