@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import actsnclass
+import mlflow
 import pandas as pd
 import numpy as np
 import os
@@ -302,7 +303,8 @@ def build_samples(features: pd.DataFrame, initial_training: int,
 def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                output_metrics_file: str, output_queried_file: str,
                classifier='RandomForest', batch=1, screen=True, 
-               output_prob_root=None, seed=42, nest=1000):
+               output_prob_root=None, seed=42, nest=1000, mlflow_uri=None,
+               mlflow_exp=None):
     """Perform the active learning loop. All results are saved to file.
     
     Parameters
@@ -331,7 +333,17 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
         If True, print on screen number of light curves processed.
     seed: int (optional)
         Random seed.
+    mlflow_uri: str (optional)
+        MLFlow address to log info on each loop. Default is None.
+    mlflow_exp: str (optional)
+        Name of MLFlow experiment. Default is None.
     """
+
+    if bool(mlflow_uri):
+
+        mlflow.set_tracking_uri(mlflow_uri)   # set mlflow remote uri
+        mlflow.set_experiment(mlflow_exp)     # determine experiment name
+        mlflow.autolog()                      # log predetermined parameters
 
     for loop in range(nloops):
 
@@ -339,7 +351,7 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
             print('Processing... ', loop)
 
         # classify
-        data.classify(method=classifier, seed=seed, n_est=nest)
+        data.classify(method=classifier, seed=seed, n_est=nest, return_model=bool(mlflow_uri))
         
         if isinstance(output_prob_root, str):
             data_temp = data.test_metadata.copy(deep=True)
@@ -363,6 +375,44 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
         # save query sample to file
         data.save_queried_sample(output_queried_file, loop=loop, batch=batch,
                                  full_sample=False)
+
+        if bool(mlflow_uri):
+            with mlflow.start_run(run_name=strategy + "_loop_" + str(loop)):
+
+                # Log metadata
+                meta_info = {
+                   "n_train": data.train_labels.shape[0],
+                   "n_test": data.test_labels.shape[0],
+                   "n_queried": data.queried_sample.shape[0],
+                   "n_queryable": data.queryable_ids.shape[0]
+                }
+    
+                with open("meta.json", "w") as f:
+                   json.dump(meta_info, f, indent=2)
+                   mlflow.log_artifact("meta.json")
+
+                # log parameters of learn_loop
+                mlflow.log_param('loop', loop)
+                mlflow.log_param('strategy', strategy)
+                mlflow.log_param('classifier', classifier)
+                mlflow.log_param('batch', batch)
+
+                # log metrics
+                for i in range(len(data.metrics_list_names)):
+                    mlflow.log_metric(data.metrics_list_names[i], data.metrics_list_values[i])
+
+                # log signature
+                signature = infer_signature(data.train_features, data.train_model.predict(data.train_features))
+                mlflow.sklearn.log_model(
+                    data.train_model,
+                    artifact_path=ARTIFACT_PATH,
+                    signature=signature,
+                    input_example=X_train.iloc[:2]
+                 )
+
+    # Save training state
+    mlflow.log_artifact(f"{EXPERIMENT}_training_ids.csv")
+    # TODO: Save the data as well
         
         
         
