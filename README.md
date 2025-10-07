@@ -42,7 +42,7 @@ python3 -m pip install -r requirements.txt
 Then you can install the functionalities of this package.
 
 ```
-python setup.py install 
+pip install .
 ```
 
 ## Rainbow
