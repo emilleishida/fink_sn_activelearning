@@ -378,7 +378,7 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                                  full_sample=False)
 
         if bool(mlflow_uri):
-            with mlflow.start_run(run_name=strategy + "_loop_" + str(loop)):
+            with mlflow.start_run(run_name=strategy + "_loop_" + str(loop)) as run:
 
                 # Log metadata
                 meta_info = {
@@ -406,12 +406,14 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
 
                 # log signature
                 signature = infer_signature(data.train_features, data.trained_model.predict(data.train_features))
-                mlflow.sklearn.log_model(
-                    data.trained_model,
-                    name ='actsnfink_',
+                current_model = mlflow.sklearn.log_model(
+                    name ='actsnfink_' + str(loop),
                     signature = signature,
-                    input_example = data.test_features[:2]
+                    input_example = data.test_features[:2],
+                    sk_model=data.trained_model,
+                    model_type = 'classifier'
                  )
+
 
                 # Saving output file
                 mlflow.log_artifact(output_metrics_file)
@@ -420,6 +422,14 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                 # Saving datasets
                 train = pd.DataFrame(data.train_features, columns=features_names)
                 mlflow.log_table(train, artifact_file='training_features.parquet')
+                
+                result = mlflow.evaluate(
+                         model=current_model.model_uri,
+                         data=data.test_features,
+                         targets=data.test_labels,
+                         model_type="classifier",
+                         evaluators = ['default']
+                         )
         
         
 def build_matrix(fname_output: str, dirname_input: str, n: int,

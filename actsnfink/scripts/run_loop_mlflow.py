@@ -30,13 +30,13 @@ def main():
     
     
     fname_features_matrix = '../../data/features.csv'             # output features file
-    fname_raw_output = '../../../test_mlflow/data/raw.csv.gz'          # output raw data file
+    fname_raw_output = '../../../test_mlflow_2/data/raw.csv.gz'          # output raw data file
     dirname_input = '../../../data/AL_data/'                       # input directory with labelled alerts
-    dirname_output = '../../../test_mlflow/'                       # root products output directory
+    dirname_output = '../../../test_mlflow_2/'                       # root products output directory
     append_name = ''                                               # append to all metric, prob and queries names
     
-    nloops = 3                        # number of learning loops
-    strategy = 'UncSampling'         # query strategy
+    nloops = 3                         # number of learning loops
+    strategy = 'UncSampling'            # query strategy
     initial_training = 10               # total number of objs in initial training
     frac_Ia_tot = 0.5                   # fraction of Ia in initial training 
     n_realizations = 1                  # total number of realizations
@@ -46,8 +46,8 @@ def main():
     n = 15000                           # number of random simbad objects per file 
                                         # to be used as part of the raw data
 
-    mlflow_uri = "http://localhost:5000"     # address of mlflow server
-    mlflow_exp = 'finksnclass_ztf'          # root name for this experiment run
+    mlflow_uri = "https://mlflow-dev.fink-broker.org"     # address of mlflow server
+    mlflow_exp = 'finksnclass_ztf_evaluate'          # root name for this experiment run
     
     drop_zeros = True                   # ignore objects with observations in only 1 filter
     screen = True                       # print debug comments to screen
