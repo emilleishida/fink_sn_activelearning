@@ -388,9 +388,7 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                    "n_queryable": data.queryable_ids.shape[0]
                 }
     
-                with open("meta.json", "w") as f:
-                   json.dump(meta_info, f, indent=2)
-                   mlflow.log_artifact("meta.json")
+                mlflow.log_dict(meta_info, "meta.json")  
 
                 # log parameters of learn_loop
                 mlflow.log_param('loop', loop)
@@ -404,31 +402,32 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                 for i in range(len(data.metrics_list_names)):
                     mlflow.log_metric(data.metrics_list_names[i], data.metrics_list_values[i])
 
+                print('train_features=', data.train_features)
+                print('test_features=', data.test_features)
+                print('train_labels=', data.train_labels)
+                print('test_labels=', data.test_labels)
+
                 # log signature
                 signature = infer_signature(data.train_features, data.trained_model.predict(data.train_features))
                 current_model = mlflow.sklearn.log_model(
                     name ='actsnfink_' + str(loop),
                     signature = signature,
-                    input_example = data.test_features[:2],
                     sk_model=data.trained_model,
                     model_type = 'classifier'
                  )
 
-
                 # Saving output file
                 mlflow.log_artifact(output_metrics_file)
-                mlflow.log_artifact(output_queried_file)
 
                 # Saving datasets
                 train = pd.DataFrame(data.train_features, columns=features_names)
                 mlflow.log_table(train, artifact_file='training_features.parquet')
                 
-                result = mlflow.evaluate(
+                result = mlflow.models.evaluate(
                          model=current_model.model_uri,
                          data=data.test_features,
                          targets=data.test_labels,
                          model_type="classifier",
-                         evaluators = ['default']
                          )
         
         
