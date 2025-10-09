@@ -350,9 +350,7 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
 
         mlflow.set_tracking_uri(mlflow_uri)   # set mlflow remote uri
         mlflow.set_experiment(mlflow_exp)     # determine experiment name
-        mlflow.log_artifact(test_code_path, 
-                                    artifact_path='code/feature_extract_ztf.py')
-        mlflow.log_artifact(test_data_path, artifact_path, code='code/test_alerts.parquet')
+
        
     for loop in range(nloops):
 
@@ -387,6 +385,9 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
 
         if bool(mlflow_uri):
             with mlflow.start_run(run_name=strategy + "_loop_" + str(loop)) as run:
+
+                mlflow.log_artifact(pre_code_path, artifact_path='code')
+                mlflow.log_artifact(pre_data_path, artifact_path='code')
 
                 # Log metadata
                 meta_info = {

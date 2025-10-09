@@ -48,6 +48,8 @@ def main():
 
     mlflow_uri = "https://mlflow-dev.fink-broker.org"     # address of mlflow server
     mlflow_exp = 'finksnclass_ztf_evaluate'          # root name for this experiment run
+    pre_code_path = 'feature_extraction_ztf.py'
+    pre_data_path = '../../data/test_alerts.parquet'
     
     drop_zeros = True                   # ignore objects with observations in only 1 filter
     screen = True                       # print debug comments to screen
@@ -134,7 +136,8 @@ def main():
                    output_queried_file=output_queried_file,
                    classifier='RandomForest', seed=None,
                    batch=1, screen=True, output_prob_root=output_prob_root, mlflow_uri=mlflow_uri, 
-                   mlflow_exp=mlflow_exp, features_names=features_names)
+                   mlflow_exp=mlflow_exp, features_names=features_names, pre_code_path=pre_code_path,
+                   pre_data_path=pre_data_path)
     
 if __name__ == '__main__':
     main()
