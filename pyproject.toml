@@ -18,7 +18,8 @@ dependencies = [
     "scipy>=1.7.3",
     "scikit-learn>=1.0.2",
     "fink_utils>=0.43.0",
-    "mlflow>=3.4.0"
+    "mlflow>=3.4.0",
+    "docutils>=0.21.2"
 ]
 
 [project.scripts]
