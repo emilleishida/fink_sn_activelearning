@@ -306,7 +306,8 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                output_metrics_file: str, output_queried_file: str,
                classifier='RandomForest', batch=1, screen=True, 
                output_prob_root=None, seed=42, nest=1000, mlflow_uri=None,
-               mlflow_exp=None, features_names=None):
+               mlflow_exp=None, features_names=None, pre_code_path=None,
+               pre_data_path=None):
     """Perform the active learning loop. All results are saved to file.
     
     Parameters
@@ -339,12 +340,19 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
         MLFlow address to log info on each loop. Default is None.
     mlflow_exp: str (optional)
         Name of MLFlow experiment. Default is None.
+    pre_code_path: str (optional)
+        Path to code enabling feature extraction. Default is None.
+    pre_data_path: str (optional)
+        Path to data enabling feature extraction. Default is None.
     """
 
     if bool(mlflow_uri):
 
         mlflow.set_tracking_uri(mlflow_uri)   # set mlflow remote uri
         mlflow.set_experiment(mlflow_exp)     # determine experiment name
+        mlflow.log_artifact(test_code_path, 
+                                    artifact_path='code/feature_extract_ztf.py')
+        mlflow.log_artifact(test_data_path, artifact_path, code='code/test_alerts.parquet')
        
     for loop in range(nloops):
 
@@ -401,11 +409,6 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                 # log metrics
                 for i in range(len(data.metrics_list_names)):
                     mlflow.log_metric(data.metrics_list_names[i], data.metrics_list_values[i])
-
-                print('train_features=', data.train_features)
-                print('test_features=', data.test_features)
-                print('train_labels=', data.train_labels)
-                print('test_labels=', data.test_labels)
 
                 # log signature
                 signature = infer_signature(data.train_features, data.trained_model.predict(data.train_features))
