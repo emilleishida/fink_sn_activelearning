@@ -198,8 +198,7 @@ def extract_features_rf_snia(
 
 def main():
 
-    pre_data_test = '/media/emille/git/Fink/supernova_al/repository/' + \
-                       'fink_sn_activelearning/data/test_alerts.parquet'
+    pre_data_test = '../../data/test_alerts.parquet'
     
     # read data
     data = pd.read_parquet(pre_data_test)
