@@ -19,7 +19,8 @@ dependencies = [
     "scikit-learn>=1.0.2",
     "fink_utils>=0.43.0",
     "mlflow>=3.4.0",
-    "docutils"
+    "docutils",
+    "shap>=0.48.0"
 ]
 
 [project.scripts]
