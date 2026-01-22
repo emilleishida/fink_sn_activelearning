@@ -153,6 +153,7 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
                 with_baseline=False, 
                 min_data_points=7,
                 list_filters=['g','r'],
+                nrising_filters=2,
                 low_bound=-10):
     """Use Rainbow to fit light curve.
 
@@ -166,6 +167,8 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
         Default is for ZTF: {"g": 4770.0, "r": 6231.0, "i": 7625.0} 
     with_baseline: bool (optional)
         Baseline to be considered. Default is False (baseline 0).
+    nrising_filters: int (optional)
+        Number of filters going required for feature extraction.
     low_bound: float (optional)
         Lower bound of FLUXCAL to consider. Default is -10.
 
@@ -185,7 +188,7 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
                      low_bound=low_bound)
 
     # at least one filter survived
-    if sum(filter_flag.values()) > 2:
+    if sum(filter_flag.values()) > nrising_filters:
         # normalize light curve    
 
         lc_max = max(flux)
