@@ -132,10 +132,8 @@ def filter_data_rainbow(mjd, flt, flux,
                 
                 # check if it is rising
                 avg_data = average_intraday_data(lc)
-                flux_sorted = is_sorted(avg_data['FLUXCAL'].values)
-
-                if flux_sorted:
-                    filter_flags[i] = True
+                if len(avg_data) > 0:
+                    filter_flags[i] = is_sorted(avg_data['FLUXCAL'].values)
                 else:
                     filter_flags[i] = False
         else:
