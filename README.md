@@ -47,7 +47,7 @@ python setup.py install
 
 ## Rainbow
 
-If you wish to use the `Rainbow` features from [Russeil et al., 2023](https://arxiv.org/abs/2310.02916) it is also necessary to install the `light_curve` package by [Malanchev et al., 2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.502.5147M/abstract) as modified by E. Russeil [here](https://github.com/erusseil/light-curve-python).
+If you wish to use the `Rainbow` features from [Russeil et al., 2023](https://arxiv.org/abs/2310.02916) it is also necessary to install the `light_curve` package by [Malanchev et al., 2021](https://ui.adsabs.harvard.edu/abs/2021MNRAS.502.5147M/abstract) as presented [here](https://github.com/light-curve/light-curve-python).
 
 
 
