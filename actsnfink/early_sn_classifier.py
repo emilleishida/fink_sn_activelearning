@@ -14,6 +14,9 @@
 # limitations under the License.
 
 import actsnclass
+import json
+import mlflow
+from mlflow.models.signature import infer_signature
 import pandas as pd
 import numpy as np
 import os
@@ -302,7 +305,9 @@ def build_samples(features: pd.DataFrame, initial_training: int,
 def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
                output_metrics_file: str, output_queried_file: str,
                classifier='RandomForest', batch=1, screen=True, 
-               output_prob_root=None, seed=42, nest=1000):
+               output_prob_root=None, seed=42, nest=1000, mlflow_uri=None,
+               mlflow_exp=None, features_names=None, pre_code_path=None,
+               pre_data_path=None):
     """Perform the active learning loop. All results are saved to file.
     
     Parameters
@@ -331,15 +336,29 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
         If True, print on screen number of light curves processed.
     seed: int (optional)
         Random seed.
+    mlflow_uri: str (optional)
+        MLFlow address to log info on each loop. Default is None.
+    mlflow_exp: str (optional)
+        Name of MLFlow experiment. Default is None.
+    pre_code_path: str (optional)
+        Path to code enabling feature extraction. Default is None.
+    pre_data_path: str (optional)
+        Path to data enabling feature extraction. Default is None.
     """
 
+    if bool(mlflow_uri):
+
+        mlflow.set_tracking_uri(mlflow_uri)   # set mlflow remote uri
+        mlflow.set_experiment(mlflow_exp)     # determine experiment name
+
+       
     for loop in range(nloops):
 
         if screen:
             print('Processing... ', loop)
 
         # classify
-        data.classify(method=classifier, seed=seed, n_est=nest)
+        data.classify(method=classifier, seed=seed, n_est=nest, return_model=bool(mlflow_uri))
         
         if isinstance(output_prob_root, str):
             data_temp = data.test_metadata.copy(deep=True)
@@ -363,7 +382,57 @@ def learn_loop(data: actsnclass.DataBase, nloops: int, strategy: str,
         # save query sample to file
         data.save_queried_sample(output_queried_file, loop=loop, batch=batch,
                                  full_sample=False)
-        
+
+        if bool(mlflow_uri):
+            with mlflow.start_run(run_name=strategy + "_loop_" + str(loop)) as run:
+
+                mlflow.log_artifact(pre_code_path, artifact_path='code')
+                mlflow.log_artifact(pre_data_path, artifact_path='code')
+
+                # Log metadata
+                meta_info = {
+                   "n_train": data.train_labels.shape[0],
+                   "n_test": data.test_labels.shape[0],
+                   "n_queried": len(data.queried_sample),
+                   "n_queryable": data.queryable_ids.shape[0]
+                }
+    
+                mlflow.log_dict(meta_info, "meta.json")  
+
+                # log parameters of learn_loop
+                mlflow.log_param('loop', loop)
+                mlflow.log_param('strategy', strategy)
+                mlflow.log_param('classifier', classifier)
+                mlflow.log_param('batch', batch)
+                mlflow.log_param('seed', seed)
+                mlflow.log_param('nest', nest)
+
+                # log metrics
+                for i in range(len(data.metrics_list_names)):
+                    mlflow.log_metric(data.metrics_list_names[i], data.metrics_list_values[i])
+
+                # log signature
+                signature = infer_signature(data.train_features, data.trained_model.predict(data.train_features))
+                current_model = mlflow.sklearn.log_model(
+                    name ='actsnfink_' + str(loop),
+                    signature = signature,
+                    sk_model=data.trained_model,
+                    model_type = 'classifier'
+                 )
+
+                # Saving output file
+                mlflow.log_artifact(output_metrics_file)
+
+                # Saving datasets
+                train = pd.DataFrame(data.train_features, columns=features_names)
+                mlflow.log_table(train, artifact_file='training_features.parquet')
+                
+                result = mlflow.models.evaluate(
+                         model=current_model.model_uri,
+                         data=data.test_features,
+                         targets=data.test_labels,
+                         model_type="classifier",
+                         )
         
         
 def build_matrix(fname_output: str, dirname_input: str, n: int,

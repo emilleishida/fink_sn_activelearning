@@ -33,16 +33,10 @@ The data necessary to reproduce these results are available through [zenodo](htt
 
 Create a virtual environment following [these instructions](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/26/python-virtual-env/). Source it and install the [actsnclass](https://github.com/COINtoolbox/ActSNClass) package.
 
-Then you can install the other dependencies using pip:
-
-```
-python3 -m pip install -r requirements.txt
-```
-
 Then you can install the functionalities of this package.
 
 ```
-python setup.py install 
+>>> (my_env) pip install .
 ```
 
 ## Rainbow
