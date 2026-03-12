@@ -449,7 +449,7 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3,
     ]
 
 @profile
-def get_sigmoid_features_dev_fast(data_all: pd.DataFrame, ewma_window=3, 
+def get_sigmoid_features_dev_fast(data_all: pd.DataFrame, ewma_window=3,  
                              min_rising_points=2, min_data_points=4,
                              rising_criteria='ewma'):
     """Compute the features needed for the Random Forest classification based
@@ -491,7 +491,7 @@ def get_sigmoid_features_dev_fast(data_all: pd.DataFrame, ewma_window=3,
     mse = {}
     nrise = {}
 
-    # avoid deepcopy (slow), replace it by numpy+mask 
+    # avoid deepcopy (slow), replace it by numpy+mask
     data_np = data_all[columns_to_keep].to_numpy()
     # extract columns on format numpy
     mjd_all, flt_all, flux_all, flux_err_all = data_np[:,0:4].T
@@ -506,26 +506,29 @@ def get_sigmoid_features_dev_fast(data_all: pd.DataFrame, ewma_window=3,
         flux = flux_all[mask_flt]
         flux_err = flux_err_all[mask_flt]
 
-        # vectorised average over intraday data points 
+        # vectorised average over intraday data points
+        mjd_round = np.around(mjd,decimals=0).astype(int)
+        unique_mjd, inv = np.unique(mjd_round, return_inverse=True)
+        valid_flux = ~np.isnan(flux)
+        valid_err = ~np.isnan(flux_err)
 
-        mjd_round = np.round(mjd).astype(int) 
-        unique_mjd = np.unique(mjd_round)
-        #Sum flux per unique mjd
-        flux_sum = np.bincount(mjd_round, weights=flux)
-        flux_count = np.bincount(mjd_round)
-        flux_avg = flux_sum[unique_mjd] / flux_count[unique_mjd]
-        # the same for err
-        flux_err_sum = np.bincount(mjd_round, weights=flux_err)
-        flux_err_avg = flux_err_sum[unique_mjd] / flux_count[unique_mjd]
-        
-        mjd_avg = unique_mjd
+        flux_sum = np.bincount(inv[valid_flux], weights=flux[valid_flux])
+        flux_count = np.bincount(inv[valid_flux])
+        flux_avg = flux_sum / flux_count
+
+        flux_err_sum = np.bincount(inv[valid_err], weights=flux_err[valid_err])
+        flux_err_count = np.bincount(inv[valid_err])
+        flux_err_avg = flux_err_sum / flux_err_count
+
+        mjd_sum = np.bincount(inv[valid_flux], weights=mjd[valid_flux])
+        mjd_avg = mjd_sum / flux_count
+        mjd_avg = np.around(mjd_avg,decimals=0).astype(float)
 
         # mask negative flux below low bound
-        valid = flux_avg > low_bound
-        flux_avg = flux_avg[valid]
-        flux_err_avg = flux_err_avg[valid]
-        mjd_avg = mjd_avg[valid]
-
+        valid_mask = flux_avg > low_bound
+        flux_avg = flux_avg[valid_mask]
+        flux_err_avg = flux_err_avg[valid_mask]
+        mjd_avg = mjd_avg[valid_mask]
         # check minimum number of points per filter
         if len(flux_avg) >= min_data_points:
 
@@ -533,17 +536,17 @@ def get_sigmoid_features_dev_fast(data_all: pd.DataFrame, ewma_window=3,
                 # compute the derivative
                 rising_c = get_ewma_derivative(pd.Series(flux_avg), ewma_window)
             elif rising_criteria == 'diff':
-                # calculate the diff with np (vectorized)
-                rising_c = np.diff(flux_avg,prepend=flux_avg[0])
-                      
-            # mask data with negative derivative
-            mask_rising = rising_c >= 0 
-            flux_rising = flux_avg[mask_rising]
-            flux_err_rising = flux_err_avg[mask_rising]
-            mjd_rising = mjd_avg[mask_rising]
+                # calculate the diff flux_avg with np (vectorized)
+                rising_c = np.diff(flux_avg,prepend=np.nan)
+
+            # mask data with negative part
+            rising_c = np.asarray(rising_c)
+            mask = ~ (rising_c < 0)
+            flux_rising = flux_avg[mask]
+            flux_err_rising = flux_err_avg[mask]
+            mjd_rising = mjd_avg[mask]
             # at least three points (needed for the sigmoid fit) and all points on the rise
             if(len(flux_rising) >= min_rising_points) and len(flux_rising) == len(flux_avg):
-
                 # compute signal to noise ratio
                 snratio[i] = get_sn_ratio(flux_rising,flux_err_rising)
 
@@ -575,6 +578,7 @@ def get_sigmoid_features_dev_fast(data_all: pd.DataFrame, ewma_window=3,
         a['g'], b['g'], c['g'], snratio['g'], mse['g'], nrise['g'],
         a['r'], b['r'], c['r'], snratio['r'], mse['r'], nrise['r']
     ]
+
 
 def main():
     return None
