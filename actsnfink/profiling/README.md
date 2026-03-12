@@ -6,13 +6,16 @@ This directory contains a script to profile the performance of some functions.
 Install the profoling tool:
 ```
 source venv/bin/activate
-pip install line-profiler # Or pip install -r requirements.txt
+pip install -r requirements.txt
+pip install . # to install package actsnfink
+
 ```
 
 ## Running the profiler
 Run (and display) the profiling script with:
 ```
-kernprof -l -v profile.py 
+
+kernprof -l -v actsnfink/profiling/profile.py 
 ```
 
 This will show the execution time for each line of the profiled functions : 
