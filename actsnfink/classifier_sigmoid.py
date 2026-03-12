@@ -22,6 +22,7 @@ from actsnfink.sigmoid import fit_sigmoid
 from actsnfink.sigmoid import delta_t
 from actsnfink.sigmoid import compute_mse
 from actsnfink.sigmoid import fsigmoid
+from line_profiler import profile
 
 __all__ = ['filter_data', 'mask_negative_data', 'get_fake_df', 'get_fake_fit_parameters',
           'get_fake_results', 'get_ewma_derivative', 'get_sn_ratio', 'get_predicted_flux',
@@ -341,7 +342,7 @@ def get_max_fluxcal(data, list_filters):
 
     return max_fluxcal
 
-
+@profile
 def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3, 
                              min_rising_points=2, min_data_points=4,
                              rising_criteria='ewma'):
@@ -431,6 +432,137 @@ def get_sigmoid_features_dev(data_all: pd.DataFrame, ewma_window=3,
 
                 # compute mse
                 mse[i] = compute_mse(rising_flux/sum(rising_flux),
+                                     pred_flux/sum(pred_flux))
+
+            else:
+                # if rising flux has less than three
+                [a[i], b[i], c[i], snratio[i], mse[i], nrise[i]] = \
+                    get_fake_results(i)
+        else:
+            # if data points not enough
+            [a[i], b[i], c[i], snratio[i], mse[i], nrise[i]] = \
+                get_fake_results(i)
+
+    return [
+        a['g'], b['g'], c['g'], snratio['g'], mse['g'], nrise['g'],
+        a['r'], b['r'], c['r'], snratio['r'], mse['r'], nrise['r']
+    ]
+
+@profile
+def get_sigmoid_features_dev_fast(data_all: pd.DataFrame, ewma_window=3,  
+                             min_rising_points=2, min_data_points=4,
+                             rising_criteria='ewma'):
+    """Compute the features needed for the Random Forest classification based
+    on the sigmoid model.
+
+    Parameters
+    ----------
+    data_all: pd.DataFrame
+        Pandas DataFrame with at least ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
+        as columns.
+    ewma_window: int (optional)
+        Width of the ewma window. Default is 3.
+    min_rising_points: int (optional)
+        Minimum number of rising points. Default is 2.
+    min_data_points: int (optional)
+        Minimum number of data points. Default is 4.
+    rising_criteria: str (optional)
+        Criteria for defining rising points. Options are 'diff' or 'ewma'.
+        Default is 'ewma'.
+
+    Returns
+    -------
+    out: list of floats
+        List of features, ordered by filter bands:
+        [a['g'], b['g'], c['g'], snratio['g'], mse['g'], nrise['g'],
+         a['r'], b['r'], c['r'], snratio['r'], mse['r'], nrise['r']]
+
+    """
+    # lower bound on flux
+    low_bound = -10
+
+    list_filters = ['g', 'r']
+
+    # features for different filters
+    a = {}
+    b = {}
+    c = {}
+    snratio = {}
+    mse = {}
+    nrise = {}
+
+    # avoid deepcopy (slow), replace it by numpy+mask
+    data_np = data_all[columns_to_keep].to_numpy()
+    # extract columns on format numpy
+    mjd_all, flt_all, flux_all, flux_err_all = data_np[:,0:4].T
+    # ensure right type
+    mjd_all = mjd_all.astype(float)
+    flux_all = flux_all.astype(float)
+    flux_err_all = flux_err_all.astype(float)
+    for i in list_filters:
+        # add mask to filter
+        mask_flt = flt_all == i
+        mjd = mjd_all[mask_flt]
+        flux = flux_all[mask_flt]
+        flux_err = flux_err_all[mask_flt]
+
+        # vectorised average over intraday data points
+        mjd_round = np.around(mjd,decimals=0).astype(int)
+        unique_mjd, inv = np.unique(mjd_round, return_inverse=True)
+        valid_flux = ~np.isnan(flux)
+        valid_err = ~np.isnan(flux_err)
+
+        flux_sum = np.bincount(inv[valid_flux], weights=flux[valid_flux])
+        flux_count = np.bincount(inv[valid_flux])
+        flux_avg = flux_sum / flux_count
+
+        flux_err_sum = np.bincount(inv[valid_err], weights=flux_err[valid_err])
+        flux_err_count = np.bincount(inv[valid_err])
+        flux_err_avg = flux_err_sum / flux_err_count
+
+        mjd_sum = np.bincount(inv[valid_flux], weights=mjd[valid_flux])
+        mjd_avg = mjd_sum / flux_count
+        mjd_avg = np.around(mjd_avg,decimals=0).astype(float)
+
+        # mask negative flux below low bound
+        valid_mask = flux_avg > low_bound
+        flux_avg = flux_avg[valid_mask]
+        flux_err_avg = flux_err_avg[valid_mask]
+        mjd_avg = mjd_avg[valid_mask]
+        # check minimum number of points per filter
+        if len(flux_avg) >= min_data_points:
+
+            if rising_criteria == 'ewma':
+                # compute the derivative
+                rising_c = get_ewma_derivative(pd.Series(flux_avg), ewma_window)
+            elif rising_criteria == 'diff':
+                # calculate the diff flux_avg with np (vectorized)
+                rising_c = np.diff(flux_avg,prepend=np.nan)
+
+            # mask data with negative part
+            rising_c = np.asarray(rising_c)
+            mask = ~ (rising_c < 0)
+            flux_rising = flux_avg[mask]
+            flux_err_rising = flux_err_avg[mask]
+            mjd_rising = mjd_avg[mask]
+            # at least three points (needed for the sigmoid fit) and all points on the rise
+            if(len(flux_rising) >= min_rising_points) and len(flux_rising) == len(flux_avg):
+                # compute signal to noise ratio
+                snratio[i] = get_sn_ratio(flux_rising,flux_err_rising)
+
+                # get N rising points
+                nrise[i] = len(flux_rising)
+
+                dt = delta_t(mjd_rising)
+
+                # perform sigmoid fit
+                [a[i], b[i], c[i]] = fit_sigmoid(dt,flux_rising)
+
+                # predicted flux with fit parameters
+                pred_flux = get_predicted_flux(dt, a[i], b[i], c[i])
+
+                # compute mse
+                mse[i] = compute_mse(flux_rising/sum(flux_rising),
                                      pred_flux/sum(pred_flux))
 
             else:
