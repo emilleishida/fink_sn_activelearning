@@ -152,7 +152,9 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
                 min_data_points=7,
                 list_filters=['g','r'],
                 nrising_filters=2,
-                low_bound=-10):
+                low_bound=-10,
+                temperature='sigmoid',
+                bolometric='sigmoid'):
     """Use Rainbow to fit light curve.
 
     Parameters
@@ -169,6 +171,10 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
         Number of filters going required for feature extraction.
     low_bound: float (optional)
         Lower bound of FLUXCAL to consider. Default is -10.
+    temperature: str (optional)
+        Behavior of temperature function. Default is 'sigmoid'.
+    bolometric: str(optional)
+        Behavior of bolometric light curve. Default is 'sigmoid'.
 
     Returns
     -------
@@ -197,7 +203,7 @@ def fit_rainbow(mjd, flt, flux, fluxerr,
     
         # extract features
         feature = RainbowFit.from_angstrom(band_wave_aa, with_baseline=with_baseline,
-                                           bolometric='sigmoid', temperature='sigmoid')
+                                           bolometric=bolometric, temperature=temperature)
         
         try:
             values = feature(mjd, flux_norm, 
