@@ -81,7 +81,7 @@ def extract_field(alert: dict, category: str, field: str) -> np.array:
     return data
 
 
-def filter_data_rainbow(mjd, flt, flux,
+def filter_data_rainbow(mjd, flt, flux, fluxerr=False,
                 min_data_points=7,
                 list_filters=['g','r'],
                 low_bound=-10,
@@ -90,9 +90,15 @@ def filter_data_rainbow(mjd, flt, flux,
 
     Parameters
     ----------
-    data_all: pd.DataFrame
-        Pandas DataFrame with at least ['MJD', 'FLT', 'FLUXCAL', 'FLUXCALERR']
-        as columns.
+    mjd: np.array
+        observation time
+    flt: np.array
+        filter
+    flux: np.array
+        observed flux
+    fluxerr: np.array or bool (optional)
+        observed flux error. If False do not take errors into account
+        when binning light curve. Default is False.
     min_data_points: int (optional)
         Minimum number of data points in all filters. Default is 7.
     list_filters: list (optional)
