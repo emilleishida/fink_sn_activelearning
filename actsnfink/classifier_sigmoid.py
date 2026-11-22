@@ -291,14 +291,18 @@ def get_train_test(percent_train):
     return sample
 
 
-def average_intraday_data(df_intra):
-    """Average over intraday data points
+def average_intraday_data(df_intra, unc=False):
+    """Average over intraday data points. It should be applied per filter.
 
      Parameters
      ----------
      df_intra: pd.DataFrame
-        containing the history of the flux
-        with intraday data
+        containing the history of the flux measurements
+        and errors in 1 filter. 
+        Minimum keywords are ['MJD','FLUXCAL','FLUXCALERR'].
+     unc: bool (optional)
+        If True, take the uncertainty into account
+        when calculating average. Default is False.
 
      Returns
      -------
@@ -307,12 +311,27 @@ def average_intraday_data(df_intra):
     """
 
     df_average = df_intra.copy()
-    df_average['MJD'] = df_average['MJD'].apply(
-        lambda x: np.around(x, decimals=0))
-    df_average = df_average.groupby('MJD').mean(numeric_only=True)
-    df_average['MJD'] = df_average.index.values
 
-    return df_average
+    # transform MJD into integer values
+    df_average['MJD'] = df_intra['MJD'].apply(
+        lambda x: np.around(x, decimals=0))
+        
+    df_out = df_average.groupby('MJD', as_index=False)[['FLUXCAL']].mean()
+
+    if unc:
+        # identify points within a day
+        groups = df_average.groupby('MJD').ngroup()
+      
+        # for each day calculate the error within that day
+        sig_all_list = []
+        for i in np.unique(groups):
+            mask_day = groups == i
+            sig_day = df_average['FLUXCALERR'][mask_day].values
+            sig_all_list.append(np.sqrt(sum([pow(item, 2) for item in sig_day])))
+
+        df_out['FLUXCALERR'] = sig_all_list
+
+    return df_out
 
 
 def get_max_fluxcal(data, list_filters):
