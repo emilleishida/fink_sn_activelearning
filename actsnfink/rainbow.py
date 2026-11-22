@@ -84,7 +84,8 @@ def extract_field(alert: dict, category: str, field: str) -> np.array:
 def filter_data_rainbow(mjd, flt, flux,
                 min_data_points=7,
                 list_filters=['g','r'],
-                low_bound=-10):
+                low_bound=-10,
+                return_binned_lc=False):
     """Filter only rising alerts for Rainbow fit.
 
     Parameters
@@ -98,15 +99,22 @@ def filter_data_rainbow(mjd, flt, flux,
         List of filters to consider. Default is ['g', 'r'].
     low_bound: float (optional)
         Lower bound of FLUXCAL to consider. Default is -10.
+    return_binned_lc: bool (optional)
+        If True, return the binned light curve. Default is False.
 
     Returns
     -------
     filter_flags: dict
         Dictionary if light curve survived selection cuts.
+    lc_binned: pd.DataFrame (optional)
+        Binned light curve, only returned if return_binned_lc is True.
     """
     
     
     is_sorted = lambda a: np.all(a[:-1] <= a[1:])
+
+    # stored binned lc
+    lc_binned = []
     
     if is_sorted(mjd):
 
@@ -117,33 +125,52 @@ def filter_data_rainbow(mjd, flt, flux,
     
             for i in list_filters:
                 filter_flag = flt == i
-            
-                # mask negative flux below low bound
-                flux_flag = flux >= low_bound
-            
-                final_flag = np.logical_and(filter_flag, flux_flag)
-    
-                # select filter
-                flux_filter = flux[final_flag]
 
-                lc = pd.DataFrame()
-                lc['FLUXCAL'] = flux_filter
-                lc['MJD'] = mjd[final_flag]
+                if sum(filter_flag) > 0:            
+                    # mask negative flux below low bound
+                    flux_flag = flux >= low_bound
+            
+                    final_flag = np.logical_and(filter_flag, flux_flag)
+    
+                    # select filter
+                    flux_filter = flux[final_flag]
+
+                    lc = pd.DataFrame()
+                    lc['FLUXCAL'] = flux_filter
+                    lc['MJD'] = mjd[final_flag]
+
+                    # decide if errors will be taken into account
+                    unc = np.bool(fluxerr).all()
+                    if unc:
+                        lc['FLUXCALERR'] = fluxerr[final_flag]
                 
-                # check if it is rising
-                avg_data = average_intraday_data(lc)
-                if len(avg_data) > 0:
-                    filter_flags[i] = is_sorted(avg_data['FLUXCAL'].values)
+                    # check if it is rising --- THIS SHOULD BE REPLACE BY SOMETHING BETTER
+                    avg_data = average_intraday_data(lc, unc=unc)
+                    if len(avg_data) > 0:
+                        filter_flags[i] = is_sorted(avg_data['FLUXCAL'].values)
+                        if return_binned_lc:
+                            avg_data['FLT'] = i
+                            lc_binned.append(avg_data)
+                    else:
+                        filter_flags[i] = False
                 else:
-                    filter_flags[i] = False
+                        filter_flags[i] = False
         else:
             for i in list_filters:
                 filter_flags[i] = False
             
     else:
         raise ValueError('MJD is not sorted!')
-        
-    return filter_flags
+
+    if return_binned_lc == True:
+        if len(lc_binned) > 0:
+            lc_out = pd.concat(lc_binned, ignore_index=True)
+        else:
+            lc_out = None
+            
+        return filter_flags, lc_out
+    else:
+        return filter_flags
 
 
 def fit_rainbow(mjd, flt, flux, fluxerr, 
